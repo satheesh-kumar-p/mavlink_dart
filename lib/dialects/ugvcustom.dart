@@ -1810,9 +1810,9 @@ class SystemTime implements MavlinkMessage {
 class UgvSystemInfo implements MavlinkMessage {
   static const int msgId = 50001;
 
-  static const int crcExtra = 52;
+  static const int crcExtra = 128;
 
-  static const int mavlinkEncodedLength = 33;
+  static const int mavlinkEncodedLength = 37;
 
   @override
   int get mavlinkMessageId => msgId;
@@ -2137,6 +2137,34 @@ class UgvSystemInfo implements MavlinkMessage {
   /// front_mc_faults
   final UgvMotorCtrlError frontMcFaults;
 
+  /// Left Motor Controller Voltage (Unit: 0.1 V)
+  ///
+  /// MAVLink type: uint8_t
+  ///
+  /// rear_mc_voltage
+  final uint8_t rearMcVoltage;
+
+  /// Right Motor Controller Voltage (Unit: 0.1 V)
+  ///
+  /// MAVLink type: uint8_t
+  ///
+  /// front_mc_voltage
+  final uint8_t frontMcVoltage;
+
+  /// Left Motor Controller Temperature (Unit: 1 Degree Celsius)
+  ///
+  /// MAVLink type: uint8_t
+  ///
+  /// rear_mc_temperature
+  final uint8_t rearMcTemperature;
+
+  /// Right Motor Controller Temperature (Unit: 1 Degree Celsius)
+  ///
+  /// MAVLink type: uint8_t
+  ///
+  /// front_mc_temperature
+  final uint8_t frontMcTemperature;
+
   ///
   /// bit 0: head light state
   /// bit 1: front fog light state
@@ -2196,6 +2224,10 @@ class UgvSystemInfo implements MavlinkMessage {
     required this.frontRightMotorFaults,
     required this.rearMcFaults,
     required this.frontMcFaults,
+    required this.rearMcVoltage,
+    required this.frontMcVoltage,
+    required this.rearMcTemperature,
+    required this.frontMcTemperature,
     required this.lightStatus,
     required this.pduChannelStatus,
   });
@@ -2232,6 +2264,10 @@ class UgvSystemInfo implements MavlinkMessage {
         frontRightMotorFaults = json['frontRightMotorFaults'],
         rearMcFaults = json['rearMcFaults'],
         frontMcFaults = json['frontMcFaults'],
+        rearMcVoltage = json['rearMcVoltage'],
+        frontMcVoltage = json['frontMcVoltage'],
+        rearMcTemperature = json['rearMcTemperature'],
+        frontMcTemperature = json['frontMcTemperature'],
         lightStatus = json['lightStatus'],
         pduChannelStatus = json['pduChannelStatus'];
   UgvSystemInfo copyWith({
@@ -2266,6 +2302,10 @@ class UgvSystemInfo implements MavlinkMessage {
     UgvMotorError? frontRightMotorFaults,
     UgvMotorCtrlError? rearMcFaults,
     UgvMotorCtrlError? frontMcFaults,
+    uint8_t? rearMcVoltage,
+    uint8_t? frontMcVoltage,
+    uint8_t? rearMcTemperature,
+    uint8_t? frontMcTemperature,
     uint8_t? lightStatus,
     uint8_t? pduChannelStatus,
   }) {
@@ -2302,6 +2342,10 @@ class UgvSystemInfo implements MavlinkMessage {
           frontRightMotorFaults ?? this.frontRightMotorFaults,
       rearMcFaults: rearMcFaults ?? this.rearMcFaults,
       frontMcFaults: frontMcFaults ?? this.frontMcFaults,
+      rearMcVoltage: rearMcVoltage ?? this.rearMcVoltage,
+      frontMcVoltage: frontMcVoltage ?? this.frontMcVoltage,
+      rearMcTemperature: rearMcTemperature ?? this.rearMcTemperature,
+      frontMcTemperature: frontMcTemperature ?? this.frontMcTemperature,
       lightStatus: lightStatus ?? this.lightStatus,
       pduChannelStatus: pduChannelStatus ?? this.pduChannelStatus,
     );
@@ -2341,6 +2385,10 @@ class UgvSystemInfo implements MavlinkMessage {
         'frontRightMotorFaults': frontRightMotorFaults,
         'rearMcFaults': rearMcFaults,
         'frontMcFaults': frontMcFaults,
+        'rearMcVoltage': rearMcVoltage,
+        'frontMcVoltage': frontMcVoltage,
+        'rearMcTemperature': rearMcTemperature,
+        'frontMcTemperature': frontMcTemperature,
         'lightStatus': lightStatus,
         'pduChannelStatus': pduChannelStatus,
       };
@@ -2383,8 +2431,12 @@ class UgvSystemInfo implements MavlinkMessage {
     var frontRightMotorFaults = data_.getUint8(28);
     var rearMcFaults = data_.getUint8(29);
     var frontMcFaults = data_.getUint8(30);
-    var lightStatus = data_.getUint8(31);
-    var pduChannelStatus = data_.getUint8(32);
+    var rearMcVoltage = data_.getUint8(31);
+    var frontMcVoltage = data_.getUint8(32);
+    var rearMcTemperature = data_.getUint8(33);
+    var frontMcTemperature = data_.getUint8(34);
+    var lightStatus = data_.getUint8(35);
+    var pduChannelStatus = data_.getUint8(36);
 
     return UgvSystemInfo(
         ts1Hour: ts1Hour,
@@ -2418,6 +2470,10 @@ class UgvSystemInfo implements MavlinkMessage {
         frontRightMotorFaults: frontRightMotorFaults,
         rearMcFaults: rearMcFaults,
         frontMcFaults: frontMcFaults,
+        rearMcVoltage: rearMcVoltage,
+        frontMcVoltage: frontMcVoltage,
+        rearMcTemperature: rearMcTemperature,
+        frontMcTemperature: frontMcTemperature,
         lightStatus: lightStatus,
         pduChannelStatus: pduChannelStatus);
   }
@@ -2456,8 +2512,12 @@ class UgvSystemInfo implements MavlinkMessage {
     data_.setUint8(28, frontRightMotorFaults);
     data_.setUint8(29, rearMcFaults);
     data_.setUint8(30, frontMcFaults);
-    data_.setUint8(31, lightStatus);
-    data_.setUint8(32, pduChannelStatus);
+    data_.setUint8(31, rearMcVoltage);
+    data_.setUint8(32, frontMcVoltage);
+    data_.setUint8(33, rearMcTemperature);
+    data_.setUint8(34, frontMcTemperature);
+    data_.setUint8(35, lightStatus);
+    data_.setUint8(36, pduChannelStatus);
     return data_;
   }
 }
