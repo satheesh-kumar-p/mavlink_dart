@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'crc.dart';
 import 'mavlink_dialect.dart';
 import 'mavlink_frame.dart';
+import 'mavlink_signature.dart';
 import 'mavlink_version.dart';
 
 enum _ParserState {
@@ -22,6 +23,9 @@ enum _ParserState {
   waitPayloadEnd,
   waitCrcLowByte,
   waitCrcHighByte,
+  waitSignatureLinkId,
+  waitSignatureTimestamp,
+  waitSignatureValue,
 }
 
 class MavlinkParser {
@@ -48,9 +52,18 @@ class MavlinkParser {
   int _crcLowByte = -1;
   int _crcHighByte = -1;
 
-  final MavlinkDialect _dialect;
+  // Signature fields
+  int _signatureLinkId = -1;
+  final Uint8List _signatureTimestamp = Uint8List(6);
+  int _signatureTimestampCursor = -1;
+  final Uint8List _signatureValue = Uint8List(6);
+  int _signatureValueCursor = -1;
 
-  MavlinkParser(this._dialect);
+  final MavlinkDialect _dialect;
+  final MavlinkSignatureManager? _signatureManager;
+
+  MavlinkParser(this._dialect, {MavlinkSignatureManager? signatureManager})
+      : _signatureManager = signatureManager;
 
   void _resetContext() {
     _version = MavlinkVersion.v1;
@@ -67,12 +80,25 @@ class MavlinkParser {
     _payloadCursor = -1;
     _crcLowByte = -1;
     _crcHighByte = -1;
+    _signatureLinkId = -1;
+    _signatureTimestampCursor = -1;
+    _signatureValueCursor = -1;
   }
 
   bool _checkCRC() {
     var header = (_version == MavlinkVersion.v1)
-      ? [_payloadLength, _sequence, _systemId, _componentId, _messageId]
-      : [_payloadLength, _incompatibilityFlags, _compatibilityFlags, _sequence, _systemId, _componentId, _messageIdLow, _messageIdMiddle, _messageIdHigh];
+        ? [_payloadLength, _sequence, _systemId, _componentId, _messageId]
+        : [
+            _payloadLength,
+            _incompatibilityFlags,
+            _compatibilityFlags,
+            _sequence,
+            _systemId,
+            _componentId,
+            _messageIdLow,
+            _messageIdMiddle,
+            _messageIdHigh
+          ];
 
     var crc = CrcX25();
 
@@ -125,18 +151,18 @@ class MavlinkParser {
 
   // Parses individual bytes and accumlates results in the objects state machine. If the final byte yields a mavlink message, it is returned. Otherwise null is returned. State is preserved
   MavlinkFrame? parseByte(int d) {
-      switch (_state) {
+    switch (_state) {
       case _ParserState.init:
         switch (d) {
-        case MavlinkFrame.mavlinkStxV1:
-          _version = MavlinkVersion.v1;
-          _state = _ParserState.waitPayloadLength;
-          break;
-        case MavlinkFrame.mavlinkStxV2:
-          _version = MavlinkVersion.v2;
-          _state = _ParserState.waitPayloadLength;
-          break;
-        default:
+          case MavlinkFrame.mavlinkStxV1:
+            _version = MavlinkVersion.v1;
+            _state = _ParserState.waitPayloadLength;
+            break;
+          case MavlinkFrame.mavlinkStxV2:
+            _version = MavlinkVersion.v2;
+            _state = _ParserState.waitPayloadLength;
+            break;
+          default:
           // Skip the byte
         }
         break;
@@ -191,7 +217,8 @@ class MavlinkParser {
         } else {
           // For MAVLink v2
           _messageIdHigh = d;
-          _messageId = (_messageIdHigh << 16) ^ (_messageIdMiddle << 8) ^ _messageIdLow;
+          _messageId =
+              (_messageIdHigh << 16) ^ (_messageIdMiddle << 8) ^ _messageIdLow;
         }
 
         if (_payloadLength == 0) {
@@ -218,24 +245,47 @@ class MavlinkParser {
         _crcHighByte = d;
 
         if (_version == MavlinkVersion.v2) {
-          if (_incompatibilityFlags == _mavlinkIflagSigned) {
-            // TODO Handle the Signature bits.
-            _resetContext();
-            _state = _ParserState.init;
+          if ((_incompatibilityFlags & _mavlinkIflagSigned) != 0) {
+            // Packet is signed, read signature (13 bytes)
+            _state = _ParserState.waitSignatureLinkId;
             break;
           }
         }
 
-        MavlinkFrame? frame = _finishFrame();
+        MavlinkFrame? frame = _finishFrame(isSigned: false);
         _resetContext();
         _state = _ParserState.init;
         return frame;
-      }
-      return null;
+
+      case _ParserState.waitSignatureLinkId:
+        _signatureLinkId = d;
+        _signatureTimestampCursor = 0;
+        _state = _ParserState.waitSignatureTimestamp;
+        break;
+
+      case _ParserState.waitSignatureTimestamp:
+        _signatureTimestamp[_signatureTimestampCursor++] = d;
+        if (_signatureTimestampCursor == 6) {
+          _signatureValueCursor = 0;
+          _state = _ParserState.waitSignatureValue;
+        }
+        break;
+
+      case _ParserState.waitSignatureValue:
+        _signatureValue[_signatureValueCursor++] = d;
+        if (_signatureValueCursor == 6) {
+          // Got complete signature, verify and process
+          _finishFrame(isSigned: true);
+
+          _resetContext();
+          _state = _ParserState.init;
+        }
+        break;
+    }
+    return null;
   }
 
-  MavlinkFrame? _finishFrame()
-  {
+  MavlinkFrame? _finishFrame({required bool isSigned}) {
     // check CRC bytes.
     if (!_checkCRC()) {
       // The MAVLink packet is a bad CRC.
@@ -243,7 +293,72 @@ class MavlinkParser {
       return null;
     }
 
-    var message = _dialect.parse(_messageId, _payload.buffer.asByteData(0, _payloadLength));
+    // Handle signature verification if packet is signed
+    bool signatureValid = false;
+    if (isSigned) {
+      if (_signatureManager != null) {
+        // Extract timestamp from bytes (little-endian 48-bit)
+        int timestamp48 = 0;
+        for (int i = 0; i < 6; i++) {
+          timestamp48 |= (_signatureTimestamp[i] & 0xFF) << (i * 8);
+        }
+
+        // Build header for signature verification
+        final header = (_version == MavlinkVersion.v1)
+            ? Uint8List.fromList([
+                _payloadLength,
+                _sequence,
+                _systemId,
+                _componentId,
+                _messageId
+              ])
+            : Uint8List.fromList([
+                _payloadLength,
+                _incompatibilityFlags,
+                _compatibilityFlags,
+                _sequence,
+                _systemId,
+                _componentId,
+                _messageIdLow,
+                _messageIdMiddle,
+                _messageIdHigh
+              ]);
+
+        // Verify signature
+        signatureValid = _signatureManager!.verifySignature(
+          header: header,
+          payload: Uint8List.fromList(_payload.sublist(0, _payloadLength)),
+          crcLow: _crcLowByte,
+          crcHigh: _crcHighByte,
+          linkId: _signatureLinkId,
+          timestamp48: timestamp48,
+          signature: _signatureValue,
+          systemId: _systemId,
+          componentId: _componentId,
+        );
+      }
+
+      // Check if packet should be accepted based on signature policy
+      if (_signatureManager != null) {
+        if (!_signatureManager!.shouldAcceptPacket(
+            isSigned: true, signatureValid: signatureValid)) {
+          // Reject packet due to signature policy
+          return null;
+        }
+      }
+    } else {
+      // Unsigned packet
+      if (_signatureManager != null) {
+        if (!_signatureManager!
+            .shouldAcceptPacket(isSigned: false, signatureValid: false)) {
+          // Reject unsigned packet due to policy
+          return null;
+        }
+      }
+    }
+
+    var message = _dialect.parse(
+        _messageId, _payload.buffer.asByteData(0, _payloadLength));
     if (message == null) {
       return null;
     }
