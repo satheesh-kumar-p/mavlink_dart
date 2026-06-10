@@ -1,0 +1,4 @@
+[submodule "mavlink"]
+	path = mavlink
+	url = https://github.com/satheesh-kumar-p/mavlink
+	branch = main
