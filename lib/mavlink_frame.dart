@@ -2,7 +2,7 @@ library dart_mavlink;
 
 import 'dart:typed_data';
 
-import 'package:dart_mavlink/crc.dart';
+import 'package:mavlink_dart/crc.dart';
 
 import 'mavlink_message.dart';
 import 'mavlink_signature.dart';
@@ -20,24 +20,29 @@ class MavlinkFrame {
   MavlinkMessage message;
   final MavlinkSignatureManager? _signatureManager;
 
+  final bool _isSigned;
+  final bool _signatureValid;
+
   MavlinkFrame(this.version, this.sequence, this.systemId, this.componentId,
-      this.message,
+      this.message, this._isSigned, this._signatureValid,
       {MavlinkSignatureManager? signatureManager})
       : _signatureManager = signatureManager;
 
   /// Create MavlinkFrame for MAVLink version1.
   factory MavlinkFrame.v1(
       int sequence, int systemId, int componentId, MavlinkMessage message) {
-    return MavlinkFrame(
-        MavlinkVersion.v1, sequence, systemId, componentId, message);
+    return MavlinkFrame(MavlinkVersion.v1, sequence, systemId, componentId,
+        message, false, false);
   }
 
   /// Create MavlinkFrame for MAVLink version2.
   factory MavlinkFrame.v2(
       int sequence, int systemId, int componentId, MavlinkMessage message,
       {MavlinkSignatureManager? signatureManager}) {
+    final willSign = signatureManager != null;
     return MavlinkFrame(
         MavlinkVersion.v2, sequence, systemId, componentId, message,
+        willSign, willSign,
         signatureManager: signatureManager);
   }
 
@@ -48,6 +53,8 @@ class MavlinkFrame {
       'systemId': systemId,
       'componentId': componentId,
       'message': message.toJson(),
+      'isSigned': _isSigned,
+      'signatureValid': _signatureValid,
     };
   }
 
@@ -162,8 +169,11 @@ class MavlinkFrame {
     if (isSigned) {
       final timestamp48 = _signatureManager!.generateTimestamp();
 
-      // Build header for signature calculation
+      // Build header for signature calculation (must start with STX — the
+      // C library mavlink_sign_packet receives a pointer to the first byte of
+      // the wire frame, which is always 0xFD for MAVLink v2).
       final header = Uint8List.fromList([
+        mavlinkStxV2,           // 0xFD
         payloadLength,
         incompatibilityFlags,
         compatibilityFlags,

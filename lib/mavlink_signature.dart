@@ -35,6 +35,7 @@ class MavlinkSignatureConfig {
     if (secretKey.length != 32) {
       throw ArgumentError('Secret key must be exactly 32 bytes');
     }
+
     if (linkId < 0 || linkId > 255) {
       throw ArgumentError('Link ID must be 0-255');
     }
@@ -43,57 +44,50 @@ class MavlinkSignatureConfig {
 
 /// Manages MAVLink message signing and verification
 class MavlinkSignatureManager {
-  static const int _timestampEpochOffset =
-      1420070400; // Jan 1, 2015 GMT in Unix time
-  static const int _timestampMaxSkew = 6000000; // 1 minute in 10µs units
-  static const int _signatureLength = 6; // First 48 bits of SHA-256
+  static const int _signatureLength = 6;
 
   final MavlinkSignatureConfig config;
 
-  /// Current timestamp counter (48-bit value in 10µs units since Jan 1, 2015)
+  /// Current 48-bit signing timestamp (in 100 microsecond units per MAVLink spec)
   int _currentTimestamp = 0;
 
-  /// Map of last seen timestamps per link (key: "sysId:compId:linkId")
-  final Map<String, int> _lastTimestamps = {};
+  /// Last seen timestamps by "sysId:compId:linkId"
+  final Map<String, int> _lastTimestamps = <String, int>{};
 
   MavlinkSignatureManager(this.config) {
-    // Initialize timestamp to current time
-    _currentTimestamp = _getCurrentTimestamp48();
+    // Initialise from real wall-clock time so the very first outgoing
+    // timestamp is in the expected range for remote peers.
+    _currentTimestamp =
+        DateTime.now().microsecondsSinceEpoch ~/ 10 & 0xFFFFFFFFFFFF;
   }
 
-  /// Get current timestamp in 48-bit 10µs units since Jan 1, 2015 GMT
-  int _getCurrentTimestamp48() {
-    final now = DateTime.now().toUtc();
-    final microsSinceEpoch = now.microsecondsSinceEpoch;
-
-    // Convert to 10µs units since MAVLink epoch (Jan 1, 2015)
-    final tenMicrosSinceMavlinkEpoch =
-        (microsSinceEpoch - (_timestampEpochOffset * 1000000)) ~/ 10;
-
-    // Mask to 48 bits
-    return tenMicrosSinceMavlinkEpoch & 0xFFFFFFFFFFFF;
+  /// Optional setter if you want to resume from a stored value.
+  void setInitialTimestamp(int value) {
+    _currentTimestamp = value & 0xFFFFFFFFFFFF;
   }
 
-  /// Generate next timestamp (monotonically increasing)
+  /// Returns a monotonically-increasing 48-bit timestamp (100 µs units)
+  /// and advances the internal counter.
   int generateTimestamp() {
-    final currentTime = _getCurrentTimestamp48();
-
-    // Ensure timestamp is monotonically increasing
-    if (currentTime > _currentTimestamp) {
-      _currentTimestamp = currentTime;
+    // Always move forward relative to wall-clock time so reconnects do not
+    // cause the counter to go backwards.
+    final int now =
+        DateTime.now().microsecondsSinceEpoch ~/ 10 & 0xFFFFFFFFFFFF;
+    if (now > _currentTimestamp) {
+      _currentTimestamp = now;
     } else {
-      _currentTimestamp++;
+      // Guarantee strict monotonicity even if the system clock is coarse.
+      _currentTimestamp = (_currentTimestamp + 1) & 0xFFFFFFFFFFFF;
     }
-
-    // Mask to 48 bits
-    _currentTimestamp &= 0xFFFFFFFFFFFF;
-
     return _currentTimestamp;
   }
 
-  /// Calculate signature for a message
+  /// Returns the first 48 bits of:
+  /// SHA-256(secret_key + header + payload + CRC_low + CRC_high + timestamp(6 bytes) + link_id)
   ///
-  /// Returns the first 48 bits (6 bytes) of SHA-256(secret_key + header + payload + CRC + linkID + timestamp)
+  /// IMPORTANT: The MAVLink C library (mavlink_sign_packet) feeds the 7 trailing
+  /// bytes as [ts[0], ts[1], ts[2], ts[3], ts[4], ts[5], link_id] — i.e. the
+  /// 6-byte timestamp first and link_id as the last byte.  Do NOT swap this order.
   Uint8List calculateSignature({
     required Uint8List header,
     required Uint8List payload,
@@ -104,37 +98,26 @@ class MavlinkSignatureManager {
   }) {
     final buffer = BytesBuilder();
 
-    // Add secret key
     buffer.add(config.secretKey);
-
-    // Add header
     buffer.add(header);
-
-    // Add payload
     buffer.add(payload);
 
-    // Add CRC (2 bytes, little-endian)
     buffer.addByte(crcLow & 0xFF);
     buffer.addByte(crcHigh & 0xFF);
 
-    // Add link ID (1 byte)
+    // The MAVLink C library mavlink_sign_packet() builds the 7-byte trailing
+    // block as: signature[0]=link_id, signature[1..6]=timestamp (little-endian),
+    // then feeds all 7 bytes to SHA-256 via sha256_update(signature, 7).
+    // So link_id MUST come before the timestamp bytes — not after.
     buffer.addByte(linkId & 0xFF);
-
-    // Add timestamp (6 bytes, little-endian)
     for (int i = 0; i < 6; i++) {
       buffer.addByte((timestamp48 >> (i * 8)) & 0xFF);
     }
 
-    // Calculate SHA-256
     final hash = sha256.convert(buffer.toBytes());
-
-    // Return first 48 bits (6 bytes)
     return Uint8List.fromList(hash.bytes.sublist(0, _signatureLength));
   }
 
-  /// Verify signature of a received message
-  ///
-  /// Returns true if signature is valid and timestamp is acceptable
   bool verifySignature({
     required Uint8List header,
     required Uint8List payload,
@@ -146,12 +129,12 @@ class MavlinkSignatureManager {
     required int systemId,
     required int componentId,
   }) {
-    // Check signature length
     if (signature.length != _signatureLength) {
+      // TODO Commenting print statement
+      // print('[SIG] REJECT bad signature length: ' + signature.length.toString());
       return false;
     }
 
-    // Calculate expected signature
     final expectedSignature = calculateSignature(
       header: header,
       payload: payload,
@@ -161,19 +144,28 @@ class MavlinkSignatureManager {
       timestamp48: timestamp48,
     );
 
-    // Compare signatures (constant-time comparison)
-    bool signaturesMatch = true;
-    for (int i = 0; i < _signatureLength; i++) {
-      if (expectedSignature[i] != signature[i]) {
-        signaturesMatch = false;
-      }
-    }
+    // TODO Commenting print statement
+    // ── DEBUG ──────────────────────────────────────────────────────────────
+    // String rxHex = signature.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    // String exHex = expectedSignature.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    // String keyHex = config.secretKey.sublist(0, 4).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    // print('[SIG] sysid=' + systemId.toString() +
+    //       ' compid=' + componentId.toString() +
+    //       ' linkId=' + linkId.toString() +
+    //       ' ts=' + timestamp48.toString());
+    // print('[SIG] received =' + rxHex);
+    // print('[SIG] expected =' + exHex);
+    // print('[SIG] key[0..3]=' + keyHex);
+    // ── END DEBUG ──────────────────────────────────────────────────────────
 
-    if (!signaturesMatch) {
+    if (!_constantTimeEquals(expectedSignature, signature)) {
+      // TODO Commenting print statement
+      // print('[SIG] REJECT signature mismatch!');
       return false;
     }
 
-    // Check timestamp
+    // TODO Commenting print statement
+    // print('[SIG] signature bytes match, checking timestamp...');
     return _verifyTimestamp(
       timestamp48: timestamp48,
       systemId: systemId,
@@ -182,46 +174,45 @@ class MavlinkSignatureManager {
     );
   }
 
-  /// Verify timestamp is acceptable (not too old, not in the future, monotonically increasing)
+  /// Tolerance window: 1 000 000 units = ~10 seconds in 100 µs units.
+  /// Allows clock drift and brief reconnects without rejecting valid packets.
+  static const int _timestampToleranceUnits = 1000000;
+
   bool _verifyTimestamp({
     required int timestamp48,
     required int systemId,
     required int componentId,
     required int linkId,
   }) {
-    final linkKey = '$systemId:$componentId:$linkId';
-    final currentTime = _getCurrentTimestamp48();
+    final String linkKey = systemId.toString() + ':' + componentId.toString() + ':' + linkId.toString();
+    final int? lastTimestamp = _lastTimestamps[linkKey];
 
-    // Check if timestamp is too far in the past (more than 1 minute)
-    final timeDiff = (currentTime - timestamp48) & 0xFFFFFFFFFFFF;
-    if (timeDiff > _timestampMaxSkew && timeDiff < 0x7FFFFFFFFFFF) {
-      // Timestamp is too old
-      return false;
-    }
+    // TODO Commenting print statement
+    // ── DEBUG ──────────────────────────────────────────────────────────────
+    // print('[TS] key=' + linkKey +
+    //       ' incoming=' + timestamp48.toString() +
+    //       ' last=' + lastTimestamp.toString() +
+    //       ' tolerance=' + _timestampToleranceUnits.toString());
+    // ── END DEBUG ──────────────────────────────────────────────────────────
 
-    // Check if timestamp is too far in the future (more than 1 minute)
-    final futureDiff = (timestamp48 - currentTime) & 0xFFFFFFFFFFFF;
-    if (futureDiff > _timestampMaxSkew && futureDiff < 0x7FFFFFFFFFFF) {
-      // Timestamp is too far in the future
-      return false;
-    }
-
-    // Check monotonic increase for this link
-    final lastTimestamp = _lastTimestamps[linkKey];
     if (lastTimestamp != null) {
-      if (timestamp48 <= lastTimestamp) {
-        // Timestamp did not increase (possible replay attack)
+      if (timestamp48 < (lastTimestamp - _timestampToleranceUnits)) {
+        // TODO Commenting print statement
+        // print('[TS] REJECT replay: ' + timestamp48.toString() +
+        //       ' < (' + lastTimestamp.toString() +
+        //       ' - ' + _timestampToleranceUnits.toString() + ')');
         return false;
       }
     }
 
-    // Update last seen timestamp for this link
-    _lastTimestamps[linkKey] = timestamp48;
-
+    if (lastTimestamp == null || timestamp48 > lastTimestamp) {
+      _lastTimestamps[linkKey] = timestamp48 & 0xFFFFFFFFFFFF;
+    }
+    // TODO Commenting print statement
+    // print('[TS] ACCEPT timestamp OK');
     return true;
   }
 
-  /// Check if a packet should be accepted based on signature verification result and policy
   bool shouldAcceptPacket({
     required bool isSigned,
     required bool signatureValid,
@@ -232,12 +223,24 @@ class MavlinkSignatureManager {
 
       case SignatureAcceptPolicy.acceptUnsigned:
         if (!isSigned) {
-          return true; // Accept unsigned
+          return true;
         }
-        return signatureValid; // Reject incorrectly signed
+        return signatureValid;
 
       case SignatureAcceptPolicy.acceptAll:
         return true;
     }
+  }
+
+  bool _constantTimeEquals(Uint8List a, Uint8List b) {
+    if (a.length != b.length) {
+      return false;
+    }
+
+    int diff = 0;
+    for (int i = 0; i < a.length; i++) {
+      diff |= (a[i] ^ b[i]);
+    }
+    return diff == 0;
   }
 }
