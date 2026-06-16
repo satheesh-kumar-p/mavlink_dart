@@ -2,7 +2,7 @@ library dart_mavlink;
 
 import 'dart:typed_data';
 
-import 'package:dart_mavlink/mavlink_message.dart';
+import 'package:mavlink_dart/mavlink_message.dart';
 
 abstract class MavlinkDialect {
   int get version;

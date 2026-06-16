@@ -1,7 +1,7 @@
 import 'dart:typed_data';
-import 'package:dart_mavlink/mavlink_dialect.dart';
-import 'package:dart_mavlink/mavlink_message.dart';
-import 'package:dart_mavlink/types.dart';
+import 'package:mavlink_dart/mavlink_dialect.dart';
+import 'package:mavlink_dart/mavlink_message.dart';
+import 'package:mavlink_dart/types.dart';
 import 'dart:convert';
 
 /// MAVLINK component type reported in HEARTBEAT message to identify node properties.

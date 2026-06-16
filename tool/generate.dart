@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:args/args.dart';
-import 'package:dart_mavlink/crc.dart';
+import 'package:mavlink_dart/crc.dart';
 import 'package:path/path.dart' as path;
 import 'package:xml/xml.dart';
 
@@ -714,9 +714,9 @@ Future<bool> generateCode(String dstPath, String srcDialectPath) async {
   String content = '';
 
   content += "import 'dart:typed_data';\n";
-  content += "import 'package:dart_mavlink/mavlink_dialect.dart';\n";
-  content += "import 'package:dart_mavlink/mavlink_message.dart';\n";
-  content += "import 'package:dart_mavlink/types.dart';\n";
+  content += "import 'package:mavlink_dart/mavlink_dialect.dart';\n";
+  content += "import 'package:mavlink_dart/mavlink_message.dart';\n";
+  content += "import 'package:mavlink_dart/types.dart';\n";
   content += "import 'dart:convert'\n;";
 
   // Write enum fields

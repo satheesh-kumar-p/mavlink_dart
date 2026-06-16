@@ -6,8 +6,8 @@ This is a Dart package for parsing and serializing MAVLink v1/v2 packets. See `e
 Import the library.
 
 ```dart
-import 'package:dart_mavlink/mavlink.dart';
-import 'package:dart_mavlink/dialects/common.dart';
+import 'package:mavlink_dart/mavlink.dart';
+import 'package:mavlink_dart/dialects/common.dart';
 ```
 
 ### Parsing Messages
@@ -157,8 +157,8 @@ MAVLink 2 supports message signing to verify message authenticity and prevent un
 ### Basic Signing Setup
 
 ```dart
-import 'package:dart_mavlink/mavlink.dart';
-import 'package:dart_mavlink/dialects/common.dart';
+import 'package:mavlink_dart/mavlink.dart';
+import 'package:mavlink_dart/dialects/common.dart';
 import 'dart:typed_data';
 
 // Create a 32-byte secret key (must be shared securely between systems)
