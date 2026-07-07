@@ -55,7 +55,7 @@ class Heartbeat implements MavlinkMessage {
   /// system_status
   final uint8_t systemStatus;
 
-  /// Bytes: 14 (HC/GCS) or Bytes 18 (COMP). Internal communication library version indicator injected automatically by protocol wire layer.
+  /// MAVLink version, not writable by user, gets added by protocol because of magic data type: uint8_t_mavlink_version
   ///
   /// MAVLink type: uint8_t
   ///
@@ -929,15 +929,15 @@ class RadioStatus implements MavlinkMessage {
   }
 }
 
-/// Aggregated telemetry monitoring framework health and status of all subsystems.
+/// Provides aggregated health and status of all subsystems. ICD: COMP_UGV_STATUS. Direction: Compute broadcast. Frequency: 1 Hz. Payload length: 55 bytes.
 ///
 /// UGV_SYSTEM_INFO
 class UgvSystemInfo implements MavlinkMessage {
   static const int msgId = 50001;
 
-  static const int crcExtra = 181;
+  static const int crcExtra = 88;
 
-  static const int mavlinkEncodedLength = 81;
+  static const int mavlinkEncodedLength = 55;
 
   @override
   int get mavlinkMessageId => msgId;
@@ -945,534 +945,351 @@ class UgvSystemInfo implements MavlinkMessage {
   @override
   int get mavlinkCrcExtra => crcExtra;
 
-  /// Bytes: 31-33. Packed bitmask covering the absolute physical fault registers array logs for all powertrain components. Bytes 36(0) to 37(7): Aft motor controllers system check covering overspeed, overload, phase loss, brake, encoder tracking anomalies, thermal tracking errors, hall framework failures, and engine stall conditions targeting both Port and Starboard motors. Bytes 38(0) to 39(7): Forward motor controllers matching system fault check covering overspeed, overload, phase loss, brake, encoder, thermal, hall, and stall criteria for both Forward Port and Starboard motors.
+  /// Byte 19 (Bit 0): L band radio UGV Ethernet Communication fault. 0: Fault not present, 1: Fault present. Byte 19 (Bit 1): L band radio UGV Firmware fault. 0: Fault not present, 1: Fault present. Byte 19 (Bit 2): L band radio UGV Local RSSI/Noise fault. 0: Fault not present, 1: Fault present. Byte 19 (Bit 3): L band radio UGV Temperature fault. 0: Fault not present, 1: Fault present. Byte 19 (Bit 4): L band link connection Heartbeat fault. 0: Fault not present, 1: Fault present. Byte 19 (Bit 5): L band link connection Remote RSSI Fault. 0: Fault not present, 1: Fault present. Byte 19 (Bit 6): L band link health Local RSSI Fault. 0: Fault not present, 1: Fault present. Byte 19 (Bit 7): L band link health Remote RSSI Fault. 0: Fault not present, 1: Fault present. Byte 20 (Bit 0): L band link health Local noise fault. 0: Fault not present, 1: Fault present. Byte 20 (Bit 1): L band link health Remote noise fault. 0: Fault not present, 1: Fault present. Byte 20 (Bit 2): L band link health SNR Fault. 0: Fault not present, 1: Fault present. Byte 20 (Bit 3): L band link health Packet loss fault. 0: Fault not present, 1: Fault present. Byte 20 (Bit 4): L band link health Heartbeat timeout fault. 0: Fault not present, 1: Fault present. Byte 20 (Bits 5-6): L band Link connection. Range 0-3. 0: Unknown, 1: Connected, 2: Disconnected, 3: Reserved. Byte 20 (Bit 7): Reserved for future use. Byte 21 (Bits 0-1): L band link health. Range 0-3. 0: Unknown, 1: Healthy, 2: Degraded, 3: Faulty. Byte 21 (Bit 2): Ethernet switch GNSS Ping fault. 0: Fault not present, 1: Fault present. Byte 21 (Bit 3): Ethernet switch L Band radio ping fault. 0: Fault not present, 1: Fault present. Byte 21 (Bit 4): Ethernet switch 2D Lidar ping fault. 0: Fault not present, 1: Fault present. Byte 21 (Bit 5): Ethernet switch 3d Lidar ping fault. 0: Fault not present, 1: Fault present. Byte 21 (Bit 6): Ethernet switch secondary compute ping fault. 0: Fault not present, 1: Fault present. Byte 21 (Bit 7): GNSS Position validity error fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 0): GNSS Fix quality fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 1): GNSS Fix dimension fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 2): GNSS Satellite fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 3): GNSS HDOP Fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 4): GNSS Heading validity error fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 5): IMU Communication fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 6): IMU Data integrity fault. 0: Fault not present, 1: Fault present. Byte 22 (Bit 7): 2D Lidar Communication fault. 0: Fault not present, 1: Fault present.
+  ///
+  /// MAVLink type: uint32_t
+  ///
+  /// sensor_subsystem_health_3
+  final uint32_t sensorSubsystemHealth3;
+
+  /// Byte 25 (Bits 0-1): Aft Motor controller state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 25 (Bits 2-3): Forward Motor controller state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 25 (Bits 4-5): HV Battery state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 25 (Bits 6-7): LV Battery state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 26 (Bits 0-1): LV PDU state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 26 (Bits 2-3): DC DC (48V to 12V) state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 26 (Bits 4-5): HV PDU state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 26 (Bits 6-7): Forward left motor state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 27 (Bits 0-1): Aft left motor state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 27 (Bits 2-3): Forward right motor state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 27 (Bits 4-5): Aft right motor state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 27 (Bits 6-7): Main Compute state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 28 (Bits 0-1): LV Battery Charger State. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 28 (Bits 2-3): VCU state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 28 (Bits 4-7): Reserved for future use.
+  ///
+  /// MAVLink type: uint32_t
+  ///
+  /// vcu_subsystem_status
+  final uint32_t vcuSubsystemStatus;
+
+  /// Byte 31 (Bits 0-1): Forward motor controller power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 31 (Bits 2-3): Aft motor controller power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 31 (Bits 4-5): DC DC (48 V to 12 V) power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 31 (Bits 6-7): HV PDU power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 32 (Bits 0-1): LV PDU power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 32 (Bits 2-3): UHF radio power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 32 (Bits 4-5): LBAND radio power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 32 (Bits 6-7): Ethernet switch power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 33 (Bits 0-1): GNSS power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 33 (Bits 2-3): IMU power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 33 (Bits 4-5): 2D Lidar power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 33 (Bits 6-7): 3D Lidar power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 34 (Bits 0-1): VCU power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 34 (Bits 2-3): Main compute power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 34 (Bits 4-5): Secondary compute power state. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 34 (Bits 6-7): RGBD Camera Power State. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved.
+  ///
+  /// MAVLink type: uint32_t
+  ///
+  /// vcu_subsystem_power_state1
+  final uint32_t vcuSubsystemPowerState1;
+
+  /// Byte 36 (Bit 0): Aft motor controller Aft Port Motor overspeed. 0: Fault not present, 1: Fault present. Byte 36 (Bit 1): Aft motor controller Aft Port Motor overload. 0: Fault not present, 1: Fault present. Byte 36 (Bit 2): Aft motor controller Aft Port Motor phase loss. 0: Fault not present, 1: Fault present. Byte 36 (Bit 3): Aft motor controller Aft Port Motor brake. 0: Fault not present, 1: Fault present. Byte 36 (Bit 4): Aft motor controller Aft Port Motor encoder fault. 0: Fault not present, 1: Fault present. Byte 36 (Bit 5): Aft motor controller Aft Port Motor overtemperature. 0: Fault not present, 1: Fault present. Byte 36 (Bit 6): Aft motor controller Aft Port Motor Hall fault. 0: Fault not present, 1: Fault present. Byte 36 (Bit 7): Aft motor controller Aft Port Motor stalled. 0: Fault not present, 1: Fault present. Byte 37 (Bit 0): Aft motor controller Aft starboard Motor overspeed. 0: Fault not present, 1: Fault present. Byte 37 (Bit 1): Aft motor controller Aft starboard Motor overload. 0: Fault not present, 1: Fault present. Byte 37 (Bit 2): Aft motor controller Aft starboard Motor phase loss. 0: Fault not present, 1: Fault present. Byte 37 (Bit 3): Aft motor controller Aft starboard Motor brake. 0: Fault not present, 1: Fault present. Byte 37 (Bit 4): Aft motor controller Aft starboard Motor encoder fault. 0: Fault not present, 1: Fault present. Byte 37 (Bit 5): Aft motor controller Aft starboard Motor overtemperature. 0: Fault not present, 1: Fault present. Byte 37 (Bit 6): Aft motor controller Aft starboard Motor hall fault. 0: Fault not present, 1: Fault present. Byte 37 (Bit 7): Aft motor controller Aft starboard Motor stalled. 0: Fault not present, 1: Fault present. Byte 38 (Bit 0): Forward motor controller Forward port Motor overspeed. 0: Fault not present, 1: Fault present. Byte 38 (Bit 1): Forward motor controller Forward port Motor overload. 0: Fault not present, 1: Fault present. Byte 38 (Bit 2): Forward motor controller Forward port Motor phase loss. 0: Fault not present, 1: Fault present. Byte 38 (Bit 3): Forward motor controller Forward port Motor brake. 0: Fault not present, 1: Fault present. Byte 38 (Bit 4): Forward motor controller Forward port Motor encoder fault. 0: Fault not present, 1: Fault present. Byte 38 (Bit 5): Forward motor controller Forward port Motor over temperature. 0: Fault not present, 1: Fault present. Byte 38 (Bit 6): Forward motor controller Forward port Motor Hall fault. 0: Fault not present, 1: Fault present. Byte 38 (Bit 7): Forward motor controller Forward port Motor stalled. 0: Fault not present, 1: Fault present. Byte 39 (Bit 0): Forward motor controller Forward starboard Motor overspeed. 0: Fault not present, 1: Fault present. Byte 39 (Bit 1): Forward motor controller Forward starboard Motor overload. 0: Fault not present, 1: Fault present. Byte 39 (Bit 2): Forward motor controller Forward starboard Motor phase loss. 0: Fault not present, 1: Fault present. Byte 39 (Bit 3): Forward motor controller Forward starboard Motor brake. 0: Fault not present, 1: Fault present. Byte 39 (Bit 4): Forward motor controller Forward starboard Motor encoder fault. 0: Fault not present, 1: Fault present. Byte 39 (Bit 5): Forward motor controller Forward starboard Motor over temperature. 0: Fault not present, 1: Fault present. Byte 39 (Bit 6): Forward motor controller Forward starboard Motor hall fault. 0: Fault not present, 1: Fault present. Byte 39 (Bit 7): Forward motor controller Forward starboard Motor stalled. 0: Fault not present, 1: Fault present.
   ///
   /// MAVLink type: uint32_t
   ///
   /// motor_faults
   final uint32_t motorFaults;
 
-  /// Bytes: 36-39. Packed internal traction motor controller drive electronics health loop validation checklist profile register. Bytes 41(0) to 42(7): Dynamic powertrain motor driver safety errors bitmask tracking loop anomalies including global drive loops failure, electrical phase overcurrent, input rail overvoltage, input rail undervoltage, internal UART data framework failures, DC bus balance faults, thermal temperature check boundaries violation, and internal CAN interface packet network drops targeting both Aft and Forward controller modules. Byte 43 (Bits 0): Aft motor controller validation feedback parameters checking matrix loop authority flag (0: Valid, 1: Invalid). Byte 43 (Bits 1): Forward motor controller validation feedback parameters checking loop.
-  ///
-  /// MAVLink type: uint32_t
-  ///
-  /// comp_interface_health_2
-  final uint32_t compInterfaceHealth2;
-
-  /// Bytes: 57-60. Reference coordinates anchor latitude data value allocation field space. Valid coordinates only return when locking parameter 56(0) equals 1. Scaling factor constraint: 1e-7 integer format.
+  /// Bytes 57-60. Range -900000000 to 900000000. If Byte 56 (Bit 0) is set to 1, then lat value is valid. Scale = 1e-7.
   ///
   /// MAVLink type: int32_t
   ///
   /// lat
   final int32_t lat;
 
-  /// Bytes: 61-64. Reference coordinates anchor longitude data value allocation field space. Valid coordinates only return when locking parameter 56(0) equals 1. Scaling factor constraint: 1e-7 integer format.
+  /// Bytes 61-64. Range -1800000000 to 1800000000. If Byte 56 (Bit 0) is set to 1, then long value is valid. Scale = 1e-7.
   ///
   /// MAVLink type: int32_t
   ///
   /// lon
   final int32_t lon;
 
-  /// Byte: 11. Low Voltage system battery state-of-charge gauge indicator. Returns 0-100 percentage range.
+  /// Byte 11: LV battery SoC. Range 0-255. 0-100: valid percentage, 101-255: Invalid. Byte 12: HV battery SoC. Range 0-255. 0-100: valid percentage, 101-255: Invalid.
   ///
   /// MAVLink type: uint16_t
   ///
   /// battery_soc
   final uint16_t batterySoc;
 
-  /// Byte: 14 (Bits 0-3). Drive mode limit selection (1: Low, 2: Medium, 3: High). Byte 14 (Bits 4-7) Drive Mode loop strategy (1: Speed, 2: Torque, 3: Torque with speed limit).
+  /// Byte 13 (Bits 0-3): Autonomy Mode. Range 0-15. 1: Mode A, 2: Mode B, 3: Mode C, 4: Mode D, 5: Mode E, 0 and 6-15: reserved. Byte 13 (Bits 4-5): Hold State. Range 0-3. 1: Disengaged, 2: Engaged, 0 and 3: Reserved. Byte 13 (Bits 6-7): Arm mode. Range 0-3. 1: Disarmed, 2: Armed, 3: Override, 0: Reserved. Byte 14 (Bits 0-3): Drive mode limit. Range 0-15. 1: Low, 2: Medium, 3: High, 0 and 4-15: reserved. Byte 14 (Bits 4-7): Drive Mode. Range 0-15. 1: Speed mode, 2: Torque mode, 3: Torque with speed limit, 0 and 4-15: reserved.
   ///
   /// MAVLink type: uint16_t
   ///
-  /// comp_model
-  final uint16_t compModel;
+  /// comp_mode1
+  final uint16_t compMode1;
 
-  /// Bytes: 16-17. Packed bitmask mapping diagnostics for UHF hardware elements. Bits 16(0) to 16(3): UHF Radio UART, Firmware, RSSI, and Temperature faults. Bits 16(4) to 17(4): UHF Transceiver link connection drops, noises, SNR, and heartbeat timeout indicators.
+  /// Byte 16 (Bit 0): UHF Radio Fault UART communication fault. 0: Fault not present, 1: Fault present. Byte 16 (Bit 1): UHF Radio fault Firmware fault. 0: Fault not present, 1: Fault present. Byte 16 (Bit 2): UHF Radio Fault Local RSSI/Noise fault. 0: Fault not present, 1: Fault present. Byte 16 (Bit 3): UHF Radio fault Temperature fault. 0: Fault not present, 1: Fault present. Byte 16 (Bit 4): UHF Link connection Heartbeat fault. 0: Fault not present, 1: Fault present. Byte 16 (Bit 5): UHF Link connection Remote RSSI fault. 0: Fault not present, 1: Fault present. Byte 16 (Bit 6): UHF Link Health Local RSSI Fault. 0: Fault not present, 1: Fault present. Byte 16 (Bit 7): UHF Link Health Remote RSSI Fault. 0: Fault not present, 1: Fault present. Byte 17 (Bit 0): UHF Link Health Local noise fault. 0: Fault not present, 1: Fault present. Byte 17 (Bit 1): UHF Link Health Remote noise fault. 0: Fault not present, 1: Fault present. Byte 17 (Bit 2): UHF Link Health SNR Fault. 0: Fault not present, 1: Fault present. Byte 17 (Bit 3): UHF Link Health Packet loss fault. 0: Fault not present, 1: Fault present. Byte 17 (Bit 4): UHF Link Health Heartbeat timeout fault. 0: Fault not present, 1: Fault present. Byte 17 (Bits 5-7): Reserved for future use.
   ///
   /// MAVLink type: uint16_t
   ///
   /// sensor_subsystem_health_1
   final uint16_t sensorSubsystemHealth1;
 
-  /// Bytes: 19-20. Packed bitmask monitoring tracking loops for L-Band onboard radios. Bits 19(0) to 19(3): L-Band Ethernet, Firmware, RSSI, and Temp faults. Bits 19(4) to 20(4): L-Band link connection drops, noises, SNR anomalies, and timeout alerts. Byte 20 (Bits 5-6) L-Band Link connection status.
+  /// Byte 23 (Bit 0): 2D Lidar Data integrity fault. 0: Fault not present, 1: Fault present. Byte 23 (Bit 1): 3D Lidar Communication fault. 0: Fault not present, 1: Fault present. Byte 23 (Bits 2-3): Forward-single camera Fault. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 23 (Bits 4-5): Forward-composite Camera fault. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 23 (Bits 6-7): Port Camera fault. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 24 (Bits 0-1): Starboard Camera fault. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 24 (Bits 2-3): Rear Camera fault. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 24 (Bits 4-5): Forward day/night Camera fault. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 24 (Bit 6): 3D Lidar Data integrity fault. 0: Fault not present, 1: Fault present. Byte 24 (Bit 7): Reserved for future use.
   ///
   /// MAVLink type: uint16_t
   ///
   /// sensor_subsystem_health_4
   final uint16_t sensorSubsystemHealth4;
 
-  /// Bytes: 22-23. Diagnostics register. Byte 22(5) to 22(6): IMU hardware communication and data loops integrity status. Byte 22(7) to 23(1): 2D and 3D Lidar hardware lines communications check indicators. Byte 23 (Bits 2-3): Forward single camera module framework evaluation index (0: Unknown, 1: Healthy, 2: Faulty). Byte 23 (Bits 4-5): Forward composite camera system evaluation. Byte 23 (Bits 6-7): Port camera.
+  /// Byte 29 (Bits 0-1): UHF Radio - UGV State. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 29 (Bits 2-3): LBAND radio state. Range 0-3. 0: Unknown, 1: False, 2: True, 3: Reserved. Byte 29 (Bits 4-5): Ethernet switch state. Range 0-3. 0: Unknown, 1: False, 2: True, 3: Reserved. Byte 29 (Bits 6-7): GNSS state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 30 (Bits 0-1): IMU state. Range 0-3. 0: Unknown, 1: Healthy, 2: Degraded, 3: Faulty. Byte 30 (Bits 2-3): 2D lidar state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 30 (Bits 4-5): 3D lidar state. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 30 (Bits 6-7): Reserved for future use.
   ///
   /// MAVLink type: uint16_t
   ///
   /// comp_subsystem_status
   final uint16_t compSubsystemStatus;
 
-  /// Bytes: 23-24. Packed camera health index arrays. Byte 24 (Bits 0-1): Starboard camera health check index. Byte 24 (Bits 2-3): Rear camera check index. Byte 24 (Bits 4-5): Day/Night camera check index. Byte 24 (Bits 6): 3D Lidar raw metrics integration data validity flag.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// vcu_subsystem_power_state_1
-  final uint16_t vcuSubsystemPowerState1;
-
-  /// Bytes: 25-26. Dynamic power systems diagnostics registers tracker. Byte 25 (Bits 0-1): Aft motor controllers system health state status index. Byte 25 (Bits 2-3): Forward motor controllers health status. Byte 25 (Bits 4-5): High Voltage traction battery system health. Byte 25 (Bits 6-7): Low Voltage system battery health status. Byte 26 (Bits 0-1): LV PDU health. Byte 26 (Bits 2-3): DC-DC 48V-12V converter module loop health. Byte 26 (Bits 4-5): HV PDU component health status. Byte 26 (Bits 6-7): Forward left motor state.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// vcu_power_subsystem_state_2
-  final uint16_t vcuPowerSubsystemState2;
-
-  /// Bytes: 25-26. Traction array logic parameter mapping register. Byte 27 (Bits 0-1): Aft left locomotion motor state index. Byte 27 (Bits 2-3): Forward right motor state index. Byte 27 (Bits 4-5): Aft right motor state index. Byte 27 (Bits 6-7): Onboard primary core compute node hardware execution check index. Byte 28 (Bits 0-1): Secondary safety compute coprocessor unit hardware monitoring state index.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// validity_motor_faults
-  final uint16_t validityMotorFaults;
-
-  /// Bytes: 26-27. Auxiliary execution subsystems logs. Byte 28 (Bits 2-3): VCU operational system state checklist flag. Byte 29 (Bits 0-1): UGV side UHF radio transceiver platform device health. Byte 29 (Bits 2-3): Onboard L-Band receiver module hardware operations loop registry. Byte 29 (Bits 4-5): Ethernet infrastructure network switcher module verification code. Byte 29 (Bits 6-7): Onboard GNSS positioning array unit check validation key.
+  /// Byte 41 (Bit 0): Aft motor controller Drive failure. 0: Fault not present, 1: Fault present. Byte 41 (Bit 1): Aft motor controller Overcurrent. 0: Fault not present, 1: Fault present. Byte 41 (Bit 2): Aft motor controller Overvoltage. 0: Fault not present, 1: Fault present. Byte 41 (Bit 3): Aft motor controller Under voltage. 0: Fault not present, 1: Fault present. Byte 41 (Bit 4): Aft motor controller UART Communication failure. 0: Fault not present, 1: Fault present. Byte 41 (Bit 5): Aft motor controller DC Bus voltage. 0: Fault not present, 1: Fault present. Byte 41 (Bit 6): Aft motor controller Over temperature. 0: Fault not present, 1: Fault present. Byte 41 (Bit 7): Aft motor controller CAN communication fault. 0: Fault not present, 1: Fault present. Byte 42 (Bit 0): Forward motor controller Drive failure. 0: Fault not present, 1: Fault present. Byte 42 (Bit 1): Forward motor controller Overcurrent. 0: Fault not present, 1: Fault present. Byte 42 (Bit 2): Forward motor controller Overvoltage. 0: Fault not present, 1: Fault present. Byte 42 (Bit 3): Forward motor controller Under voltage. 0: Fault not present, 1: Fault present. Byte 42 (Bit 4): Forward motor controller UART communication failure. 0: Fault not present, 1: Fault present. Byte 42 (Bit 5): Forward motor controller DC bus voltage. 0: Fault not present, 1: Fault present. Byte 42 (Bit 6): Forward motor controller Over temperature. 0: Fault not present, 1: Fault present. Byte 42 (Bit 7): Forward motor controller CAN communication loss. 0: Fault not present, 1: Fault present.
   ///
   /// MAVLink type: uint16_t
   ///
   /// mc_faults_1
   final uint16_t mcFaults1;
 
-  /// Bytes: 27-28. Compute systems log bitmask. Byte 30 (Bits 0-1): Inertial Navigation IMU system health validation code (0: Unknown, 1: Healthy, 2: Degraded, 3: Faulty). Byte 30 (Bits 2-3): On-Vehicle 2D Lidar system tracking performance health index. Byte 30 (Bits 4-5): On-Vehicle 3D Lidar system tracking performance health index.
+  /// Byte 46 (Bit 0): HV battery Single cell overvoltage. 0: Fault not present, 1: Fault present. Byte 46 (Bit 1): HV battery Single cell undervoltage. 0: Fault not present, 1: Fault present. Byte 46 (Bit 2): HV battery Pack overvoltage. 0: Fault not present, 1: Fault present. Byte 46 (Bit 3): HV battery Pack undervoltage. 0: Fault not present, 1: Fault present. Byte 46 (Bit 4): HV battery Charge over temperature. 0: Fault not present, 1: Fault present. Byte 46 (Bit 5): HV battery Charge low temperature. 0: Fault not present, 1: Fault present. Byte 46 (Bit 6): HV battery Discharge over temperature. 0: Fault not present, 1: Fault present. Byte 46 (Bit 7): HV battery Discharge low temperature. 0: Fault not present, 1: Fault present. Byte 47 (Bit 0): HV battery Charge overcurrent. 0: Fault not present, 1: Fault present. Byte 47 (Bit 1): HV battery Discharge overcurrent. 0: Fault not present, 1: Fault present. Byte 47 (Bit 2): HV battery Short circuit protection. 0: Fault not present, 1: Fault present. Byte 47 (Bit 3): HV battery Forward detection IC error. 0: Fault not present, 1: Fault present. Byte 47 (Bit 4): HV battery Software lock MOS. 0: Fault not present, 1: Fault present. Byte 47 (Bit 5): HV Battery Cycle life fault. 0: Fault not present, 1: Fault Present. Byte 47 (Bit 6): HV Battery Capacity fault. 0: Fault not present, 1: Fault Present. Byte 47 (Bit 7): LV Battery Battery deeply discharged. 0: Fault not present, 1: Fault Present.
   ///
   /// MAVLink type: uint16_t
   ///
-  /// mc_faults_2
-  final uint16_t mcFaults2;
-
-  /// Bytes: 28-29. Relays configuration bitmask loop parameters layout. Byte 31 (Bits 0-1): Forward traction motor power line grid controller relay (0: Unknown, 1: ON, 2: OFF). Byte 31 (Bits 2-3): Aft traction motor power line grid controller relay. Byte 31 (Bits 4-5): Onboard DC-DC 48V to 12V converter unit electrical relay switch status. Byte 31 (Bits 6-7): HV PDU execution power rail loop confirmation flag. Byte 32 (Bits 0-1): LV PDU execution power rail loop confirmation flag. Byte 32 (Bits 2-3): UHF telemetry radio module dynamic electrical power relay validation. Byte 32 (Bits 4-5): Onboard L-Band network transceiver system electrical relay switch status.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// contactor_fault
-  final uint16_t contactorFault;
-
-  /// Bytes: 29-30. Power distribution module safety monitoring registers index layout. Byte 32 (Bits 6-7): Onboard network infrastructure Ethernet switch rail relay switch status. Byte 33 (Bits 0-1): GNSS navigation sensor system active electronic relay line status. Byte 33 (Bits 2-3): Inertial IMU instrumentation sensor active electronic relay line status. Byte 33 (Bits 4-5): 2D Lidar sensor active power line electronic relay status. Byte 33 (Bits 6-7): 3D Lidar sensor active power line electronic relay status.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// pdu_fault
-  final uint16_t pduFault;
-
-  /// Bytes: 29-30. Core system framework execution monitoring checks layout. Byte 34 (Bits 0-1): VCU primary logic central command power supply line relay verification. Byte 34 (Bits 2-3): Onboard main primary core compute node power supply rail line verification. Byte 34 (Bits 4-5): Secondary coprocessor compute node power supply rail line verification. Byte 34 (Bits 6-7): RGBD profiling video cameras active power supply line relay status.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// power_subsystem_faults_1
+  /// power_subsystem_faults1
   final uint16_t powerSubsystemFaults1;
 
-  /// Bytes: 29-30. Peripheral equipment grid management validation indices. Byte 35 (Bits 0-1): High performance vehicle lighting headlights line relay state verification (0: Unknown, 1: ON, 2: OFF). Byte 35 (Bits 2-3): High performance vehicle lighting aft brake lights line relay state verification. Byte 35 (Bits 4-5): High performance vehicle lighting forward fog lights line relay state verification.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// power_subsystem_faults_2
-  final uint16_t powerSubsystemFaults2;
-
-  /// Bytes: 30-31. Central management loop inputs diagnostics profile registers mapping. Mapped from dynamic sequential parameter checking arrays targeting physical inputs health loops.
+  /// Byte 49 (Bit 0): CAN C Bus off. 0: No, 1: Yes. Byte 49 (Bit 1): CAN A Bus off. 0: No, 1: Yes. Byte 49 (Bit 2): CAN B Bus off. 0: No, 1: Yes. Byte 49 (Bit 3): Status of the Discete inputs fault. 0: No fault, 1: Fault. Byte 49 (Bit 4): Status of the Analog inputs fault. 0: No fault, 1: Fault. Byte 49 (Bit 5): Status of the High side output drivers fault. 0: No fault, 1: Fault. Byte 49 (Bit 6): Status of the Low side output drivers fault. 0: No fault, 1: Fault. Byte 49 (Bit 7): Supply voltage fault. 0: No fault, 1: Fault. Byte 50 (Bit 0): MCU watchdog fault. 0: No Fault, 1: Fault. Byte 50 (Bit 1): CPU Overload. 0: No, 1: Yes. Byte 50 (Bit 2): RAM fault. 0: No fault, 1: Fault. Byte 50 (Bit 3): Flash CRC Failure. 0: No Fault, 1: Fault. Byte 50 (Bit 4): FCC Active. 0: Active, 1: Inactive. Byte 50 (Bit 5): Safety SBC Fault. 0: No fault, 1: Fault. Byte 50 (Bit 6): Internal Temperature fault. 0: No fault, 1: Fault. Byte 50 (Bit 7): Boot Failure. 0: No fault, 1: Fault.
   ///
   /// MAVLink type: uint16_t
   ///
   /// vcu_interface_health
   final uint16_t vcuInterfaceHealth;
 
-  /// Bytes: 33-35. Locomotion motor diagnostic metrics arrays integrity confirmation flag check code. Byte 40 (Bits 0): Raw motor metrics target payload array validity checking code targeting Aft motor system diagnostics (0: Valid, 1: Invalid). Byte 40 (Bits 1): Raw motor metrics target payload array validity checking code targeting Forward motor system diagnostics (0: Valid, 1: Invalid).
+  /// Byte 51 (Bit 0): Status of the Control CAN interface. 0: Inactive, 1: Active. Byte 51 (Bit 1): Status of the Auxiliary CAN interface. 0: Inactive, 1: Active. Byte 51 (Bit 2): Status of the Actuator CAN interface. 0: Inactive, 1: Active. Byte 51 (Bit 3): Status of the Forward motor controller serial interface. 0: Inactive, 1: Active. Byte 51 (Bit 4): Status of the Aft motor controller serial interface. 0: Inactive, 1: Active. Byte 51 (Bit 5): Status of the ethernet interface. 0: Inactive, 1: Active. Byte 51 (Bit 6): CPU load fault. 0: No fault, 1: Fault. Byte 51 (Bit 7): Memory fault. 0: No fault, 1: Fault. Byte 52 (Bit 0): Storage fault. 0: No fault, 1: Fault. Byte 52 (Bits 1-2): Secondary compute State. Range 0-3. 0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved. Byte 52 (Bits 3-7): Reserved for future use.
   ///
   /// MAVLink type: uint16_t
   ///
-  /// comp_interface_health_1
-  final uint16_t compInterfaceHealth1;
+  /// sec_comp_status
+  final uint16_t secCompStatus;
 
-  /// Bytes: 41-42. Power delivery systems structural distribution routing network diagnostics bitmask checklist profile register. Bytes 45(0) to 45(7): Electronic PDU switch array dynamic output channel electrical tracking registers covering structural failures across distribution channels 1 through 8 (0: No Fault, 1: Channel Fault present).
+  /// Byte 54 (Bit 0): Status of the Control CAN interface. 0: Inactive, 1: Active. Byte 54 (Bit 1): Status of the Auxiliary CAN interface. 0: Inactive, 1: Active. Byte 54 (Bit 2): Status of the Ethernet interface. 0: Inactive, 1: Active. Byte 54 (Bit 3): Status of Hand Controller Serial interface. 0: Inactive, 1: Active. Byte 54 (Bit 4): Vision Ethernet interface health. 0: Inactive, 1: Active. Byte 54 (Bit 5): Vision GMSL-1 interface health. 0: Inactive, 1: Active. Byte 54 (Bit 6): Vision GMSL-2 interface health. 0: Inactive, 1: Active. Byte 54 (Bit 7): Vision GMSL-3 interface health. 0: Inactive, 1: Active. Byte 55 (Bit 0): Vision GMSL-4 interface health. 0: Inactive, 1: Active. Byte 55 (Bit 1): Vision GMSL-5 interface health. 0: Inactive, 1: Active. Byte 55 (Bit 2): Vision GMSL-6 interface health. 0: Inactive, 1: Active. Byte 55 (Bit 3): Vision GMSL-7 interface health. 0: Inactive, 1: Active. Byte 55 (Bit 4): Vision GMSL-8 interface health. 0: Inactive, 1: Active. Byte 55 (Bits 5-7): Reserved for future use.
   ///
   /// MAVLink type: uint16_t
   ///
-  /// home_location
-  final uint16_t homeLocation;
+  /// comp_interface_health2
+  final uint16_t compInterfaceHealth2;
 
-  /// Bytes: 45. Low Voltage management frame storage system monitoring register guidelines checklist. Bytes 48(0) to 48(2): LV Battery performance threshold tracking flags monitoring battery terminal undervoltage limits, battery terminal overvoltage limits, and load short circuit conditions (0: Fault not present, 1: Fault present).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// pdu_fault_extended
-  final uint16_t pduFaultExtended;
-
-  /// Bytes: 45-46. Central logic tracking central command processor networks tracking indices block. Bytes 49(0) to 49(2): Internal logic communication loop transceiver status indices checking network isolation drop across CAN C Bus, CAN A Bus, and CAN B Bus configurations (0: No / Clear, 1: Yes / Bus off).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// power_subsystem_faults_extended
-  final uint16_t powerSubsystemFaultsExtended;
-
-  /// Bytes: 46-48. Central command processor inputs logic diagnostic status registers monitoring module block. Bytes 49(3) to 49(7): Central controller physical line data tracking checking loop registers covering failures on Discrete system inputs, Analog system inputs, High side output driver components, Low side output driver components, and global logic power supply voltage limits (0: No fault, 1: Subsystem fault present).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// vcu_interface_health_extended
-  final uint16_t vcuInterfaceHealthExtended;
-
-  /// Bytes: 49-50. Central command processor safety watchdogs supervisor logic monitoring checklists registry. Bytes 50(0) to 50(7): Core diagnostic indicators logging internal electronic processor tracking failures including MCU hardware hardware watchdog activation, runtime CPU processing overload limits, structural volatile RAM data validation failure, non-volatile Flash memory structural CRC verification failure, FCC system active state registration flag, integrated safety SBC co-processor failure, internal structural ambient temp limits warning, and global initial boot sequence execution failure.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// vcu_bus_faults
-  final uint16_t vcuBusFaults;
-
-  /// Bytes: 49-50. Dynamic CAN interface connection lanes validation status mapping registers register block. Bytes 51(0) to 51(2): Primary logic internal interface CAN bus status routing parameters verifying transaction pathways for the primary Control CAN interface loop, the secondary Auxiliary CAN interface loop, and the dedicated mechanical Actuator CAN interface loop (0: Inactive, 1: Active).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// vcu_internal_faults
-  final uint16_t vcuInternalFaults;
-
-  /// Bytes: 50-51. Locomotion motor controllers serial driver lane interface validation mapping logs register block. Bytes 51(3) to 51(4): Primary serial lines communication verification status tracking parameters checking data paths for the Forward motor controller serial interface loop and the Aft motor controller serial interface loop (0: Inactive, 1: Active).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// vcu_hardware_safety
-  final uint16_t vcuHardwareSafety;
-
-  /// Bytes: 51-52. Primary logic internal communication Ethernet hardware pipeline link indicator. Byte 51(5): Primary compute node global local area network high speed Ethernet lane transaction path validation flag status (0: Inactive, 1: Active).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// aux_can_interfaces
-  final uint16_t auxCanInterfaces;
-
-  /// Bytes: 51-52. Co-processor computational module hardware health parameter checking logs framework block. Bytes 51(6) to 52(0): Secondary auxiliary computing system error markers tracking loop parameters monitoring CPU execution overload fault, volatile system memory allocation faults, and mass filesystem storage device data integration failure (0: No fault, 1: Fault present). Byte 52 (Bits 1-2): Secondary compute hardware platform configuration status tracking parameter (0: Unknown, 1: Healthy, 2: Faulty, 3: Reserved).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// compute_node_health
-  final uint16_t computeNodeHealth;
-
-  /// Byte: 54. Primary graphics AI node computer standard interaction transaction peripheral connection verification lines. Bytes 54(0) to 54(3): Central AI processing system communication data interface pipelines tracking validation status verifying primary Control CAN lane, peripheral Auxiliary CAN lane, standard logic Ethernet interface network, and dedicated Hand Controller local serial terminal unit.
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// jetson_interface_health
-  final uint16_t jetsonInterfaceHealth;
-
-  /// Bytes: 54-55. High speed imaging array deserializer camera lane connection validation tracking profile lines. Bytes 54(4) to 55(4): Nvidia Jetson camera streaming hardware pipelines status tracking registers checking high resolution processing nodes covering Vision dedicated Ethernet channel, and high speed serial data pipelines GMSL-1 down through GMSL-8 interface connections (0: Inactive, 1: Active).
-  ///
-  /// MAVLink type: uint16_t
-  ///
-  /// vision_gmsl_health
-  final uint16_t visionGmslHealth;
-
-  /// Byte: 10 (Bits 0-1). VCU state tracking flag (1: Idle, 2: Key On, 3: Drive). Byte 10 (Bits 2-3) Charger connected (0: Not connected, 1: Connected). Byte 10 (Bits 4-5) Charging in progress (0: Not charging, 1: Charging). Byte 10 (Bits 6-7) Tow state (0: Disengaged, 1: Engaged).
+  /// Byte 10 (Bits 0-1): VCU operational state. Range 0-3. 0: reserved, 1: Idle, 2: Key On, 3: Drive. Byte 10 (Bits 2-3): Charger connected state. Range 0-3. 0: Not connected, 1: connected, 2-3: Reserved. Byte 10 (Bits 4-5): Charging in progress state. Range 0-3. 0: Not charging, 1: Charging, 2-3: Reserved. Byte 10 (Bits 6-7): Tow state. Range 0-3. 0: Disengaged, 1: Engaged, 2-3: Reserved.
   ///
   /// MAVLink type: uint8_t
   ///
   /// vcu_status
   final uint8_t vcuStatus;
 
-  /// Byte: 12. High Voltage powertrain traction battery fuel balance metric. Returns 0-100 percentage range.
-  ///
-  /// MAVLink type: uint8_t
-  ///
-  /// battery_hv_soc
-  final uint8_t batteryHvSoc;
-
-  /// Byte: 13 (Bits 0-3). Autonomy Mode (1: Mode A, 2: Mode B, 3: Mode C, 4: Mode D, 5: Mode E). Byte 13 (Bits 4-5) Hold State (1: Disengaged, 2: Engaged). Byte 13 (Bits 6-7) Arm Mode (1: Disarmed, 2: Armed, 3: Override).
+  /// Byte 15 (Bits 0-1): On Vehicle emergency stop. Range 0-3. 1: Disengaged, 2: Engaged, 3: Disabled, 0: Reserved. Byte 15 (Bits 2-3): Remote emergency stop. Range 0-3. 1: Disengaged, 2: Engaged, 3: Disabled, 0: Reserved. Byte 15 (Bits 4-6): Selected camera stream. Range 0-7. 0: Reserved, 1: Forward single camera, 2: Port Camera, 3: Starboard camera, 4: Aft camera, 5: Day/Night camera, 6: Forward Composite camera, 7: Invalid. Byte 15 (Bit 7): Selected camera range marker on/off status. Range 0-1. 0: Range marker off, 1: Range marker on.
   ///
   /// MAVLink type: uint8_t
   ///
   /// comp_mode2
   final uint8_t compMode2;
 
-  /// Byte: 15 (Bits 0-1). On-Vehicle emergency stop switch (1: Disengaged, 2: Engaged, 3: Disabled). Byte 15 (Bits 2-3) Remote emergency stop switch. Byte 15 (Bits 4-6) Selected active video camera feed stream index (1-6). Byte 15 (Bits 7) Range overlay marker status flag (0: OFF, 1: ON).
+  /// Byte 18 (Bits 0-1): UHF Link connection. Range 0-3. 0: Unknown, 1: Connected, 2: Disconnected, 3: Reserved. Byte 18 (Bits 2-3): UHF Link health. Range 0-3. 0: Unknown, 1: Healthy, 2: Degraded, 3: Faulty. Byte 18 (Bits 4-7): Reserved for future use.
   ///
   /// MAVLink type: uint8_t
   ///
   /// sensor_subsystem_health_2
   final uint8_t sensorSubsystemHealth2;
 
-  /// Byte: 18 (Bits 0-1). UHF Dynamic communication pipeline connection (0: Unknown, 1: Connected, 2: Disconnected). Byte 18 (Bits 2-3) UHF Radio operational health status evaluation index (0: Unknown, 1: Healthy, 2: Degraded, 3: Faulty).
+  /// Byte 35 (Bits 0-1): Head lights State. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 35 (Bits 2-3): Aft lights State. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 35 (Bits 4-5): Fog lights State. Range 0-3. 0: Unknown, 1: ON, 2: OFF, 3: Reserved. Byte 35 (Bits 6-7): Reserved for future use.
   ///
   /// MAVLink type: uint8_t
   ///
-  /// sensor_subsystem_health_3
-  final uint8_t sensorSubsystemHealth3;
+  /// vcu_power_subsystem_state2
+  final uint8_t vcuPowerSubsystemState2;
 
-  /// Byte: 21 (Bits 0-1). L-Band datalink quality evaluation index (0: Unknown, 1: Healthy, 2: Degraded, 3: Faulty). Bits 21(2) to 21(6): Ethernet core network structural interface hardware pings for sensors (GNSS, L-Band, Lidars, secondary compute node). Bits 21(7) to 22(4): GNSS localization system errors (Fix validity, Fix dimension, HDOP, Satellites, Heading faults).
+  /// Byte 40 (Bit 0): Validity of the data of Aft motor. 0: Valid, 1: Invalid. Byte 40 (Bit 1): Validity of the data of Forward motor. 0: Valid, 1: Invalid. Byte 40 (Bits 2-7): Reserved for future use.
   ///
   /// MAVLink type: uint8_t
   ///
-  /// vcu_subsystem_status
-  final uint8_t vcuSubsystemStatus;
+  /// validity_motor_faults
+  final uint8_t validityMotorFaults;
 
-  /// Byte: 40. High current distribution isolation contactor switches monitor. Bytes 44(0) to 44(5): Mechanical grid relay isolation switches status bitmask log tracking Pre-charge line, main motor controller line, input DC-DC line, HV charging line, LV charging line, and output DC-DC converter line failure status (0: No Fault / Clear, 1: Yes / Fault).
+  /// Byte 43 (Bit 0): Validity of the data of Aft motor controller. 0: Valid, 1: Invalid. Byte 43 (Bit 1): Validity of the data of Forward motor controller. 0: Valid, 1: Invalid. Byte 43 (Bits 2-7): Reserved for future use.
   ///
   /// MAVLink type: uint8_t
   ///
-  /// sec_comp_status
-  final uint8_t secCompStatus;
+  /// mc_faults_2
+  final uint8_t mcFaults2;
 
-  /// Byte: 43. High Voltage traction battery storage frame system diagnostic parameter checking register mapping block 1. Bytes 46(0) to 47(6): HV Battery management matrix logging cell errors including cell overvoltage limits, cell undervoltage limits, total pack overvoltage, total pack undervoltage, charge loop thermal limit violation, charge loop low temp limit violation, discharge loop thermal limit, discharge loop low temp limit, charge overcurrent, discharge overcurrent, short circuit protection trigger, detection instrumentation IC failure, software safety MOS lock, cycle lifespan countdown warning, and total structural storage capacity drop (0: Fault not present, 1: Fault present).
+  /// Byte 44 (Bit 0): Pre-charge Contactor fault. 0: No, 1: Yes. Byte 44 (Bit 1): Motor controller contactor fault. 0: No, 1: Yes. Byte 44 (Bit 2): I/P DC-DC Contactor fault. 0: No, 1: Yes. Byte 44 (Bit 3): HV Charging contactor fault. 0: No, 1: Yes. Byte 44 (Bit 4): LV Charging contactor fault. 0: No, 1: Yes. Byte 44 (Bit 5): O/P DC-DC Contactor fault. 0: No, 1: Yes. Byte 44 (Bits 6-7): Reserved for future use.
   ///
   /// MAVLink type: uint8_t
   ///
-  /// lat_placeholder
-  final uint8_t latPlaceholder;
+  /// contactor_fault
+  final uint8_t contactorFault;
 
-  /// Byte: 44. High Voltage traction battery storage frame system diagnostic parameter checking register mapping block 2. Byte 47(7): Low Voltage supply block battery cell deep structural depletion warning parameter state indicator (0: Fault not present, 1: Battery deeply discharged).
+  /// Byte 45 (Bit 0): Channel 1 Fault state. 0: No, 1: Fault. Byte 45 (Bit 1): Channel 2 Fault state. 0: No fault, 1: Fault. Byte 45 (Bit 2): Channel 3 Fault state. 0: No fault, 1: Fault. Byte 45 (Bit 3): Channel 4 Fault state. 0: No fault, 1: Fault. Byte 45 (Bit 4): Channel 5 Fault state. 0: No fault, 1: Fault. Byte 45 (Bit 5): Channel 6 Fault State. 0: No Fault, 1: Fault. Byte 45 (Bit 6): Channel 7 Fault state. 0: No fault, 1: Fault. Byte 45 (Bit 7): Channel 8 Fault state. 0: No Fault, 1: Fault.
   ///
   /// MAVLink type: uint8_t
   ///
-  /// long_placeholder
-  final uint8_t longPlaceholder;
+  /// pdu_fault
+  final uint8_t pduFault;
 
-  /// Byte: 53. Primary graphics AI node computer motherboard system processing boundary validation data metrics. Bytes 53(0) to 53(3): Nvidia Jetson central command board framework checks register logging processor heartbeat framework failure, system ambient temperature range violation, logic power supply input voltage anomalies, and structural CPU load execution boundary warning.
+  /// Byte 48 (Bit 0): LV Battery Under voltage. 0: Fault not present, 1: Fault Present. Byte 48 (Bit 1): LV Battery Over Voltage. 0: Fault not present, 1: Fault Present. Byte 48 (Bit 2): LV Battery Load fault. 0: Fault not present, 1: Fault Present. Byte 48 (Bits 3-7): Reserved for future use.
   ///
   /// MAVLink type: uint8_t
   ///
-  /// jetson_heartbeat
-  final uint8_t jetsonHeartbeat;
+  /// power_subsystem_faults2
+  final uint8_t powerSubsystemFaults2;
 
-  /// Byte: 56. Navigation coordinate parameters initialization validation status registry checklist. Byte 56(0): Home baseline positioning coordinates validation flag (0: Not set / Lock missing, 1: Locked and Set). Byte 56(1): Autonomy navigation mission trajectory target recording pathway state flag (0: OFF, 1: ON / Active saving).
+  /// Byte 53 (Bit 0): Jetson Heartbeat. 0: Fault not present, 1: Fault present. Byte 53 (Bit 1): Temperature fault. 0: Fault not present, 1: Fault present. Byte 53 (Bit 2): Voltage Fault. 0: Fault not present, 1: Fault present. Byte 53 (Bit 3): CPU load fault. 0: Fault not present, 1: Fault present. Byte 53 (Bits 4-7): Reserved for future use.
   ///
   /// MAVLink type: uint8_t
   ///
-  /// home_initialization
-  final uint8_t homeInitialization;
+  /// comp_interface_health1
+  final uint8_t compInterfaceHealth1;
+
+  /// Byte 56 (Bit 0): Home location status. 0: Not set, 1: Set. Byte 56 (Bit 1): Path saving status. 0: OFF, 1: ON. Byte 56 (Bits 2-7): Reserved for future use.
+  ///
+  /// MAVLink type: uint8_t
+  ///
+  /// home_location
+  final uint8_t homeLocation;
 
   UgvSystemInfo({
+    required this.sensorSubsystemHealth3,
+    required this.vcuSubsystemStatus,
+    required this.vcuSubsystemPowerState1,
     required this.motorFaults,
-    required this.compInterfaceHealth2,
     required this.lat,
     required this.lon,
     required this.batterySoc,
-    required this.compModel,
+    required this.compMode1,
     required this.sensorSubsystemHealth1,
     required this.sensorSubsystemHealth4,
     required this.compSubsystemStatus,
-    required this.vcuSubsystemPowerState1,
+    required this.mcFaults1,
+    required this.powerSubsystemFaults1,
+    required this.vcuInterfaceHealth,
+    required this.secCompStatus,
+    required this.compInterfaceHealth2,
+    required this.vcuStatus,
+    required this.compMode2,
+    required this.sensorSubsystemHealth2,
     required this.vcuPowerSubsystemState2,
     required this.validityMotorFaults,
-    required this.mcFaults1,
     required this.mcFaults2,
     required this.contactorFault,
     required this.pduFault,
-    required this.powerSubsystemFaults1,
     required this.powerSubsystemFaults2,
-    required this.vcuInterfaceHealth,
     required this.compInterfaceHealth1,
     required this.homeLocation,
-    required this.pduFaultExtended,
-    required this.powerSubsystemFaultsExtended,
-    required this.vcuInterfaceHealthExtended,
-    required this.vcuBusFaults,
-    required this.vcuInternalFaults,
-    required this.vcuHardwareSafety,
-    required this.auxCanInterfaces,
-    required this.computeNodeHealth,
-    required this.jetsonInterfaceHealth,
-    required this.visionGmslHealth,
-    required this.vcuStatus,
-    required this.batteryHvSoc,
-    required this.compMode2,
-    required this.sensorSubsystemHealth2,
-    required this.sensorSubsystemHealth3,
-    required this.vcuSubsystemStatus,
-    required this.secCompStatus,
-    required this.latPlaceholder,
-    required this.longPlaceholder,
-    required this.jetsonHeartbeat,
-    required this.homeInitialization,
   });
 
   UgvSystemInfo.fromJson(Map<String, dynamic> json)
-      : motorFaults = json['motorFaults'],
-        compInterfaceHealth2 = json['compInterfaceHealth2'],
+      : sensorSubsystemHealth3 = json['sensorSubsystemHealth3'],
+        vcuSubsystemStatus = json['vcuSubsystemStatus'],
+        vcuSubsystemPowerState1 = json['vcuSubsystemPowerState1'],
+        motorFaults = json['motorFaults'],
         lat = json['lat'],
         lon = json['lon'],
         batterySoc = json['batterySoc'],
-        compModel = json['compModel'],
+        compMode1 = json['compMode1'],
         sensorSubsystemHealth1 = json['sensorSubsystemHealth1'],
         sensorSubsystemHealth4 = json['sensorSubsystemHealth4'],
         compSubsystemStatus = json['compSubsystemStatus'],
-        vcuSubsystemPowerState1 = json['vcuSubsystemPowerState1'],
+        mcFaults1 = json['mcFaults1'],
+        powerSubsystemFaults1 = json['powerSubsystemFaults1'],
+        vcuInterfaceHealth = json['vcuInterfaceHealth'],
+        secCompStatus = json['secCompStatus'],
+        compInterfaceHealth2 = json['compInterfaceHealth2'],
+        vcuStatus = json['vcuStatus'],
+        compMode2 = json['compMode2'],
+        sensorSubsystemHealth2 = json['sensorSubsystemHealth2'],
         vcuPowerSubsystemState2 = json['vcuPowerSubsystemState2'],
         validityMotorFaults = json['validityMotorFaults'],
-        mcFaults1 = json['mcFaults1'],
         mcFaults2 = json['mcFaults2'],
         contactorFault = json['contactorFault'],
         pduFault = json['pduFault'],
-        powerSubsystemFaults1 = json['powerSubsystemFaults1'],
         powerSubsystemFaults2 = json['powerSubsystemFaults2'],
-        vcuInterfaceHealth = json['vcuInterfaceHealth'],
         compInterfaceHealth1 = json['compInterfaceHealth1'],
-        homeLocation = json['homeLocation'],
-        pduFaultExtended = json['pduFaultExtended'],
-        powerSubsystemFaultsExtended = json['powerSubsystemFaultsExtended'],
-        vcuInterfaceHealthExtended = json['vcuInterfaceHealthExtended'],
-        vcuBusFaults = json['vcuBusFaults'],
-        vcuInternalFaults = json['vcuInternalFaults'],
-        vcuHardwareSafety = json['vcuHardwareSafety'],
-        auxCanInterfaces = json['auxCanInterfaces'],
-        computeNodeHealth = json['computeNodeHealth'],
-        jetsonInterfaceHealth = json['jetsonInterfaceHealth'],
-        visionGmslHealth = json['visionGmslHealth'],
-        vcuStatus = json['vcuStatus'],
-        batteryHvSoc = json['batteryHvSoc'],
-        compMode2 = json['compMode2'],
-        sensorSubsystemHealth2 = json['sensorSubsystemHealth2'],
-        sensorSubsystemHealth3 = json['sensorSubsystemHealth3'],
-        vcuSubsystemStatus = json['vcuSubsystemStatus'],
-        secCompStatus = json['secCompStatus'],
-        latPlaceholder = json['latPlaceholder'],
-        longPlaceholder = json['longPlaceholder'],
-        jetsonHeartbeat = json['jetsonHeartbeat'],
-        homeInitialization = json['homeInitialization'];
+        homeLocation = json['homeLocation'];
   UgvSystemInfo copyWith({
+    uint32_t? sensorSubsystemHealth3,
+    uint32_t? vcuSubsystemStatus,
+    uint32_t? vcuSubsystemPowerState1,
     uint32_t? motorFaults,
-    uint32_t? compInterfaceHealth2,
     int32_t? lat,
     int32_t? lon,
     uint16_t? batterySoc,
-    uint16_t? compModel,
+    uint16_t? compMode1,
     uint16_t? sensorSubsystemHealth1,
     uint16_t? sensorSubsystemHealth4,
     uint16_t? compSubsystemStatus,
-    uint16_t? vcuSubsystemPowerState1,
-    uint16_t? vcuPowerSubsystemState2,
-    uint16_t? validityMotorFaults,
     uint16_t? mcFaults1,
-    uint16_t? mcFaults2,
-    uint16_t? contactorFault,
-    uint16_t? pduFault,
     uint16_t? powerSubsystemFaults1,
-    uint16_t? powerSubsystemFaults2,
     uint16_t? vcuInterfaceHealth,
-    uint16_t? compInterfaceHealth1,
-    uint16_t? homeLocation,
-    uint16_t? pduFaultExtended,
-    uint16_t? powerSubsystemFaultsExtended,
-    uint16_t? vcuInterfaceHealthExtended,
-    uint16_t? vcuBusFaults,
-    uint16_t? vcuInternalFaults,
-    uint16_t? vcuHardwareSafety,
-    uint16_t? auxCanInterfaces,
-    uint16_t? computeNodeHealth,
-    uint16_t? jetsonInterfaceHealth,
-    uint16_t? visionGmslHealth,
+    uint16_t? secCompStatus,
+    uint16_t? compInterfaceHealth2,
     uint8_t? vcuStatus,
-    uint8_t? batteryHvSoc,
     uint8_t? compMode2,
     uint8_t? sensorSubsystemHealth2,
-    uint8_t? sensorSubsystemHealth3,
-    uint8_t? vcuSubsystemStatus,
-    uint8_t? secCompStatus,
-    uint8_t? latPlaceholder,
-    uint8_t? longPlaceholder,
-    uint8_t? jetsonHeartbeat,
-    uint8_t? homeInitialization,
+    uint8_t? vcuPowerSubsystemState2,
+    uint8_t? validityMotorFaults,
+    uint8_t? mcFaults2,
+    uint8_t? contactorFault,
+    uint8_t? pduFault,
+    uint8_t? powerSubsystemFaults2,
+    uint8_t? compInterfaceHealth1,
+    uint8_t? homeLocation,
   }) {
     return UgvSystemInfo(
+      sensorSubsystemHealth3:
+          sensorSubsystemHealth3 ?? this.sensorSubsystemHealth3,
+      vcuSubsystemStatus: vcuSubsystemStatus ?? this.vcuSubsystemStatus,
+      vcuSubsystemPowerState1:
+          vcuSubsystemPowerState1 ?? this.vcuSubsystemPowerState1,
       motorFaults: motorFaults ?? this.motorFaults,
-      compInterfaceHealth2: compInterfaceHealth2 ?? this.compInterfaceHealth2,
       lat: lat ?? this.lat,
       lon: lon ?? this.lon,
       batterySoc: batterySoc ?? this.batterySoc,
-      compModel: compModel ?? this.compModel,
+      compMode1: compMode1 ?? this.compMode1,
       sensorSubsystemHealth1:
           sensorSubsystemHealth1 ?? this.sensorSubsystemHealth1,
       sensorSubsystemHealth4:
           sensorSubsystemHealth4 ?? this.sensorSubsystemHealth4,
       compSubsystemStatus: compSubsystemStatus ?? this.compSubsystemStatus,
-      vcuSubsystemPowerState1:
-          vcuSubsystemPowerState1 ?? this.vcuSubsystemPowerState1,
-      vcuPowerSubsystemState2:
-          vcuPowerSubsystemState2 ?? this.vcuPowerSubsystemState2,
-      validityMotorFaults: validityMotorFaults ?? this.validityMotorFaults,
       mcFaults1: mcFaults1 ?? this.mcFaults1,
-      mcFaults2: mcFaults2 ?? this.mcFaults2,
-      contactorFault: contactorFault ?? this.contactorFault,
-      pduFault: pduFault ?? this.pduFault,
       powerSubsystemFaults1:
           powerSubsystemFaults1 ?? this.powerSubsystemFaults1,
-      powerSubsystemFaults2:
-          powerSubsystemFaults2 ?? this.powerSubsystemFaults2,
       vcuInterfaceHealth: vcuInterfaceHealth ?? this.vcuInterfaceHealth,
-      compInterfaceHealth1: compInterfaceHealth1 ?? this.compInterfaceHealth1,
-      homeLocation: homeLocation ?? this.homeLocation,
-      pduFaultExtended: pduFaultExtended ?? this.pduFaultExtended,
-      powerSubsystemFaultsExtended:
-          powerSubsystemFaultsExtended ?? this.powerSubsystemFaultsExtended,
-      vcuInterfaceHealthExtended:
-          vcuInterfaceHealthExtended ?? this.vcuInterfaceHealthExtended,
-      vcuBusFaults: vcuBusFaults ?? this.vcuBusFaults,
-      vcuInternalFaults: vcuInternalFaults ?? this.vcuInternalFaults,
-      vcuHardwareSafety: vcuHardwareSafety ?? this.vcuHardwareSafety,
-      auxCanInterfaces: auxCanInterfaces ?? this.auxCanInterfaces,
-      computeNodeHealth: computeNodeHealth ?? this.computeNodeHealth,
-      jetsonInterfaceHealth:
-          jetsonInterfaceHealth ?? this.jetsonInterfaceHealth,
-      visionGmslHealth: visionGmslHealth ?? this.visionGmslHealth,
+      secCompStatus: secCompStatus ?? this.secCompStatus,
+      compInterfaceHealth2: compInterfaceHealth2 ?? this.compInterfaceHealth2,
       vcuStatus: vcuStatus ?? this.vcuStatus,
-      batteryHvSoc: batteryHvSoc ?? this.batteryHvSoc,
       compMode2: compMode2 ?? this.compMode2,
       sensorSubsystemHealth2:
           sensorSubsystemHealth2 ?? this.sensorSubsystemHealth2,
-      sensorSubsystemHealth3:
-          sensorSubsystemHealth3 ?? this.sensorSubsystemHealth3,
-      vcuSubsystemStatus: vcuSubsystemStatus ?? this.vcuSubsystemStatus,
-      secCompStatus: secCompStatus ?? this.secCompStatus,
-      latPlaceholder: latPlaceholder ?? this.latPlaceholder,
-      longPlaceholder: longPlaceholder ?? this.longPlaceholder,
-      jetsonHeartbeat: jetsonHeartbeat ?? this.jetsonHeartbeat,
-      homeInitialization: homeInitialization ?? this.homeInitialization,
+      vcuPowerSubsystemState2:
+          vcuPowerSubsystemState2 ?? this.vcuPowerSubsystemState2,
+      validityMotorFaults: validityMotorFaults ?? this.validityMotorFaults,
+      mcFaults2: mcFaults2 ?? this.mcFaults2,
+      contactorFault: contactorFault ?? this.contactorFault,
+      pduFault: pduFault ?? this.pduFault,
+      powerSubsystemFaults2:
+          powerSubsystemFaults2 ?? this.powerSubsystemFaults2,
+      compInterfaceHealth1: compInterfaceHealth1 ?? this.compInterfaceHealth1,
+      homeLocation: homeLocation ?? this.homeLocation,
     );
   }
 
   @override
   Map<String, dynamic> toJson() => {
         'msgId': msgId,
+        'sensorSubsystemHealth3': sensorSubsystemHealth3,
+        'vcuSubsystemStatus': vcuSubsystemStatus,
+        'vcuSubsystemPowerState1': vcuSubsystemPowerState1,
         'motorFaults': motorFaults,
-        'compInterfaceHealth2': compInterfaceHealth2,
         'lat': lat,
         'lon': lon,
         'batterySoc': batterySoc,
-        'compModel': compModel,
+        'compMode1': compMode1,
         'sensorSubsystemHealth1': sensorSubsystemHealth1,
         'sensorSubsystemHealth4': sensorSubsystemHealth4,
         'compSubsystemStatus': compSubsystemStatus,
-        'vcuSubsystemPowerState1': vcuSubsystemPowerState1,
+        'mcFaults1': mcFaults1,
+        'powerSubsystemFaults1': powerSubsystemFaults1,
+        'vcuInterfaceHealth': vcuInterfaceHealth,
+        'secCompStatus': secCompStatus,
+        'compInterfaceHealth2': compInterfaceHealth2,
+        'vcuStatus': vcuStatus,
+        'compMode2': compMode2,
+        'sensorSubsystemHealth2': sensorSubsystemHealth2,
         'vcuPowerSubsystemState2': vcuPowerSubsystemState2,
         'validityMotorFaults': validityMotorFaults,
-        'mcFaults1': mcFaults1,
         'mcFaults2': mcFaults2,
         'contactorFault': contactorFault,
         'pduFault': pduFault,
-        'powerSubsystemFaults1': powerSubsystemFaults1,
         'powerSubsystemFaults2': powerSubsystemFaults2,
-        'vcuInterfaceHealth': vcuInterfaceHealth,
         'compInterfaceHealth1': compInterfaceHealth1,
         'homeLocation': homeLocation,
-        'pduFaultExtended': pduFaultExtended,
-        'powerSubsystemFaultsExtended': powerSubsystemFaultsExtended,
-        'vcuInterfaceHealthExtended': vcuInterfaceHealthExtended,
-        'vcuBusFaults': vcuBusFaults,
-        'vcuInternalFaults': vcuInternalFaults,
-        'vcuHardwareSafety': vcuHardwareSafety,
-        'auxCanInterfaces': auxCanInterfaces,
-        'computeNodeHealth': computeNodeHealth,
-        'jetsonInterfaceHealth': jetsonInterfaceHealth,
-        'visionGmslHealth': visionGmslHealth,
-        'vcuStatus': vcuStatus,
-        'batteryHvSoc': batteryHvSoc,
-        'compMode2': compMode2,
-        'sensorSubsystemHealth2': sensorSubsystemHealth2,
-        'sensorSubsystemHealth3': sensorSubsystemHealth3,
-        'vcuSubsystemStatus': vcuSubsystemStatus,
-        'secCompStatus': secCompStatus,
-        'latPlaceholder': latPlaceholder,
-        'longPlaceholder': longPlaceholder,
-        'jetsonHeartbeat': jetsonHeartbeat,
-        'homeInitialization': homeInitialization,
       };
 
   factory UgvSystemInfo.parse(ByteData data_) {
@@ -1482,139 +1299,94 @@ class UgvSystemInfo implements MavlinkMessage {
           List<int>.filled(len, 0);
       data_ = Uint8List.fromList(d).buffer.asByteData();
     }
-    var motorFaults = data_.getUint32(0, Endian.little);
-    var compInterfaceHealth2 = data_.getUint32(4, Endian.little);
-    var lat = data_.getInt32(8, Endian.little);
-    var lon = data_.getInt32(12, Endian.little);
-    var batterySoc = data_.getUint16(16, Endian.little);
-    var compModel = data_.getUint16(18, Endian.little);
-    var sensorSubsystemHealth1 = data_.getUint16(20, Endian.little);
-    var sensorSubsystemHealth4 = data_.getUint16(22, Endian.little);
-    var compSubsystemStatus = data_.getUint16(24, Endian.little);
-    var vcuSubsystemPowerState1 = data_.getUint16(26, Endian.little);
-    var vcuPowerSubsystemState2 = data_.getUint16(28, Endian.little);
-    var validityMotorFaults = data_.getUint16(30, Endian.little);
-    var mcFaults1 = data_.getUint16(32, Endian.little);
-    var mcFaults2 = data_.getUint16(34, Endian.little);
-    var contactorFault = data_.getUint16(36, Endian.little);
-    var pduFault = data_.getUint16(38, Endian.little);
-    var powerSubsystemFaults1 = data_.getUint16(40, Endian.little);
-    var powerSubsystemFaults2 = data_.getUint16(42, Endian.little);
-    var vcuInterfaceHealth = data_.getUint16(44, Endian.little);
-    var compInterfaceHealth1 = data_.getUint16(46, Endian.little);
-    var homeLocation = data_.getUint16(48, Endian.little);
-    var pduFaultExtended = data_.getUint16(50, Endian.little);
-    var powerSubsystemFaultsExtended = data_.getUint16(52, Endian.little);
-    var vcuInterfaceHealthExtended = data_.getUint16(54, Endian.little);
-    var vcuBusFaults = data_.getUint16(56, Endian.little);
-    var vcuInternalFaults = data_.getUint16(58, Endian.little);
-    var vcuHardwareSafety = data_.getUint16(60, Endian.little);
-    var auxCanInterfaces = data_.getUint16(62, Endian.little);
-    var computeNodeHealth = data_.getUint16(64, Endian.little);
-    var jetsonInterfaceHealth = data_.getUint16(66, Endian.little);
-    var visionGmslHealth = data_.getUint16(68, Endian.little);
-    var vcuStatus = data_.getUint8(70);
-    var batteryHvSoc = data_.getUint8(71);
-    var compMode2 = data_.getUint8(72);
-    var sensorSubsystemHealth2 = data_.getUint8(73);
-    var sensorSubsystemHealth3 = data_.getUint8(74);
-    var vcuSubsystemStatus = data_.getUint8(75);
-    var secCompStatus = data_.getUint8(76);
-    var latPlaceholder = data_.getUint8(77);
-    var longPlaceholder = data_.getUint8(78);
-    var jetsonHeartbeat = data_.getUint8(79);
-    var homeInitialization = data_.getUint8(80);
+    var sensorSubsystemHealth3 = data_.getUint32(0, Endian.little);
+    var vcuSubsystemStatus = data_.getUint32(4, Endian.little);
+    var vcuSubsystemPowerState1 = data_.getUint32(8, Endian.little);
+    var motorFaults = data_.getUint32(12, Endian.little);
+    var lat = data_.getInt32(16, Endian.little);
+    var lon = data_.getInt32(20, Endian.little);
+    var batterySoc = data_.getUint16(24, Endian.little);
+    var compMode1 = data_.getUint16(26, Endian.little);
+    var sensorSubsystemHealth1 = data_.getUint16(28, Endian.little);
+    var sensorSubsystemHealth4 = data_.getUint16(30, Endian.little);
+    var compSubsystemStatus = data_.getUint16(32, Endian.little);
+    var mcFaults1 = data_.getUint16(34, Endian.little);
+    var powerSubsystemFaults1 = data_.getUint16(36, Endian.little);
+    var vcuInterfaceHealth = data_.getUint16(38, Endian.little);
+    var secCompStatus = data_.getUint16(40, Endian.little);
+    var compInterfaceHealth2 = data_.getUint16(42, Endian.little);
+    var vcuStatus = data_.getUint8(44);
+    var compMode2 = data_.getUint8(45);
+    var sensorSubsystemHealth2 = data_.getUint8(46);
+    var vcuPowerSubsystemState2 = data_.getUint8(47);
+    var validityMotorFaults = data_.getUint8(48);
+    var mcFaults2 = data_.getUint8(49);
+    var contactorFault = data_.getUint8(50);
+    var pduFault = data_.getUint8(51);
+    var powerSubsystemFaults2 = data_.getUint8(52);
+    var compInterfaceHealth1 = data_.getUint8(53);
+    var homeLocation = data_.getUint8(54);
 
     return UgvSystemInfo(
+        sensorSubsystemHealth3: sensorSubsystemHealth3,
+        vcuSubsystemStatus: vcuSubsystemStatus,
+        vcuSubsystemPowerState1: vcuSubsystemPowerState1,
         motorFaults: motorFaults,
-        compInterfaceHealth2: compInterfaceHealth2,
         lat: lat,
         lon: lon,
         batterySoc: batterySoc,
-        compModel: compModel,
+        compMode1: compMode1,
         sensorSubsystemHealth1: sensorSubsystemHealth1,
         sensorSubsystemHealth4: sensorSubsystemHealth4,
         compSubsystemStatus: compSubsystemStatus,
-        vcuSubsystemPowerState1: vcuSubsystemPowerState1,
+        mcFaults1: mcFaults1,
+        powerSubsystemFaults1: powerSubsystemFaults1,
+        vcuInterfaceHealth: vcuInterfaceHealth,
+        secCompStatus: secCompStatus,
+        compInterfaceHealth2: compInterfaceHealth2,
+        vcuStatus: vcuStatus,
+        compMode2: compMode2,
+        sensorSubsystemHealth2: sensorSubsystemHealth2,
         vcuPowerSubsystemState2: vcuPowerSubsystemState2,
         validityMotorFaults: validityMotorFaults,
-        mcFaults1: mcFaults1,
         mcFaults2: mcFaults2,
         contactorFault: contactorFault,
         pduFault: pduFault,
-        powerSubsystemFaults1: powerSubsystemFaults1,
         powerSubsystemFaults2: powerSubsystemFaults2,
-        vcuInterfaceHealth: vcuInterfaceHealth,
         compInterfaceHealth1: compInterfaceHealth1,
-        homeLocation: homeLocation,
-        pduFaultExtended: pduFaultExtended,
-        powerSubsystemFaultsExtended: powerSubsystemFaultsExtended,
-        vcuInterfaceHealthExtended: vcuInterfaceHealthExtended,
-        vcuBusFaults: vcuBusFaults,
-        vcuInternalFaults: vcuInternalFaults,
-        vcuHardwareSafety: vcuHardwareSafety,
-        auxCanInterfaces: auxCanInterfaces,
-        computeNodeHealth: computeNodeHealth,
-        jetsonInterfaceHealth: jetsonInterfaceHealth,
-        visionGmslHealth: visionGmslHealth,
-        vcuStatus: vcuStatus,
-        batteryHvSoc: batteryHvSoc,
-        compMode2: compMode2,
-        sensorSubsystemHealth2: sensorSubsystemHealth2,
-        sensorSubsystemHealth3: sensorSubsystemHealth3,
-        vcuSubsystemStatus: vcuSubsystemStatus,
-        secCompStatus: secCompStatus,
-        latPlaceholder: latPlaceholder,
-        longPlaceholder: longPlaceholder,
-        jetsonHeartbeat: jetsonHeartbeat,
-        homeInitialization: homeInitialization);
+        homeLocation: homeLocation);
   }
 
   @override
   ByteData serialize() {
     var data_ = ByteData(mavlinkEncodedLength);
-    data_.setUint32(0, motorFaults, Endian.little);
-    data_.setUint32(4, compInterfaceHealth2, Endian.little);
-    data_.setInt32(8, lat, Endian.little);
-    data_.setInt32(12, lon, Endian.little);
-    data_.setUint16(16, batterySoc, Endian.little);
-    data_.setUint16(18, compModel, Endian.little);
-    data_.setUint16(20, sensorSubsystemHealth1, Endian.little);
-    data_.setUint16(22, sensorSubsystemHealth4, Endian.little);
-    data_.setUint16(24, compSubsystemStatus, Endian.little);
-    data_.setUint16(26, vcuSubsystemPowerState1, Endian.little);
-    data_.setUint16(28, vcuPowerSubsystemState2, Endian.little);
-    data_.setUint16(30, validityMotorFaults, Endian.little);
-    data_.setUint16(32, mcFaults1, Endian.little);
-    data_.setUint16(34, mcFaults2, Endian.little);
-    data_.setUint16(36, contactorFault, Endian.little);
-    data_.setUint16(38, pduFault, Endian.little);
-    data_.setUint16(40, powerSubsystemFaults1, Endian.little);
-    data_.setUint16(42, powerSubsystemFaults2, Endian.little);
-    data_.setUint16(44, vcuInterfaceHealth, Endian.little);
-    data_.setUint16(46, compInterfaceHealth1, Endian.little);
-    data_.setUint16(48, homeLocation, Endian.little);
-    data_.setUint16(50, pduFaultExtended, Endian.little);
-    data_.setUint16(52, powerSubsystemFaultsExtended, Endian.little);
-    data_.setUint16(54, vcuInterfaceHealthExtended, Endian.little);
-    data_.setUint16(56, vcuBusFaults, Endian.little);
-    data_.setUint16(58, vcuInternalFaults, Endian.little);
-    data_.setUint16(60, vcuHardwareSafety, Endian.little);
-    data_.setUint16(62, auxCanInterfaces, Endian.little);
-    data_.setUint16(64, computeNodeHealth, Endian.little);
-    data_.setUint16(66, jetsonInterfaceHealth, Endian.little);
-    data_.setUint16(68, visionGmslHealth, Endian.little);
-    data_.setUint8(70, vcuStatus);
-    data_.setUint8(71, batteryHvSoc);
-    data_.setUint8(72, compMode2);
-    data_.setUint8(73, sensorSubsystemHealth2);
-    data_.setUint8(74, sensorSubsystemHealth3);
-    data_.setUint8(75, vcuSubsystemStatus);
-    data_.setUint8(76, secCompStatus);
-    data_.setUint8(77, latPlaceholder);
-    data_.setUint8(78, longPlaceholder);
-    data_.setUint8(79, jetsonHeartbeat);
-    data_.setUint8(80, homeInitialization);
+    data_.setUint32(0, sensorSubsystemHealth3, Endian.little);
+    data_.setUint32(4, vcuSubsystemStatus, Endian.little);
+    data_.setUint32(8, vcuSubsystemPowerState1, Endian.little);
+    data_.setUint32(12, motorFaults, Endian.little);
+    data_.setInt32(16, lat, Endian.little);
+    data_.setInt32(20, lon, Endian.little);
+    data_.setUint16(24, batterySoc, Endian.little);
+    data_.setUint16(26, compMode1, Endian.little);
+    data_.setUint16(28, sensorSubsystemHealth1, Endian.little);
+    data_.setUint16(30, sensorSubsystemHealth4, Endian.little);
+    data_.setUint16(32, compSubsystemStatus, Endian.little);
+    data_.setUint16(34, mcFaults1, Endian.little);
+    data_.setUint16(36, powerSubsystemFaults1, Endian.little);
+    data_.setUint16(38, vcuInterfaceHealth, Endian.little);
+    data_.setUint16(40, secCompStatus, Endian.little);
+    data_.setUint16(42, compInterfaceHealth2, Endian.little);
+    data_.setUint8(44, vcuStatus);
+    data_.setUint8(45, compMode2);
+    data_.setUint8(46, sensorSubsystemHealth2);
+    data_.setUint8(47, vcuPowerSubsystemState2);
+    data_.setUint8(48, validityMotorFaults);
+    data_.setUint8(49, mcFaults2);
+    data_.setUint8(50, contactorFault);
+    data_.setUint8(51, pduFault);
+    data_.setUint8(52, powerSubsystemFaults2);
+    data_.setUint8(53, compInterfaceHealth1);
+    data_.setUint8(54, homeLocation);
     return data_;
   }
 }
